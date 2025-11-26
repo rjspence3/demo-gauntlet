@@ -1,0 +1,45 @@
+[project]
+name = "demo-gauntlet"
+version = "0.1.0"
+description = "Demo Gauntlet MVP"
+authors = [
+    {name = "Antigravity", email = "antigravity@deepmind.google"}
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sentence-transformers",
+    "chromadb",
+    "python-pptx",
+    "pdfplumber",
+    "python-dotenv",
+    "requests",
+    "pydantic-settings",
+    "python-multipart",
+    "openai"
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pylint",
+    "mypy",
+    "httpx"
+]
+
+[tool.setuptools]
+packages = ["backend"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114", # missing-module-docstring
+    "C0115", # missing-class-docstring
+    "C0116", # missing-function-docstring
+    "R0903", # too-few-public-methods
+]
