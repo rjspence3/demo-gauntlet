@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sentence-transformers
+chromadb
+python-pptx
+pdfplumber
+python-dotenv
+requests
+pydantic-settings
+python-multipart
+openai
+pdf2image
+pytesseract

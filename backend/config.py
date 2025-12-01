@@ -8,7 +8,8 @@ class Config:
     PROJECT_NAME = "Demo Gauntlet"
     VERSION = "0.1.0"
     # Placeholder for future config
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
+    BRAVE_API_KEY: str | None = os.getenv("BRAVE_API_KEY")
 
     # Feature Flags
     ENABLE_RESEARCH: bool = True

@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from backend.ingestion import router as ingestion_router
 from backend.research import router as research_router
 from backend.challenges import router as challenges_router
+from backend.api.routers import challengers as challengers_management_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,6 +24,7 @@ from backend.evaluation import router as evaluation_router
 app.include_router(ingestion_router.router)
 app.include_router(research_router.router)
 app.include_router(challenges_router.router)
+app.include_router(challengers_management_router.router)
 app.include_router(evaluation_router.router)
 
 @app.get("/health")

@@ -1,6 +1,7 @@
 from typing import List, Optional
 from backend.models.core import ResearchDossier
 from backend.models.llm import LLMClient, MockLLM
+from backend.models.fact_store import FactStore
 from backend.research.client import SearchClient, MockSearchClient
 from backend.research.query_builder import generate_queries
 from backend.research.summarizer import summarize_research
@@ -11,9 +12,11 @@ logger = get_logger(__name__)
 
 class ResearchAgent:
     def __init__(self, llm_client: Optional[LLMClient] = None,
-                 search_client: Optional[SearchClient] = None):
+                 search_client: Optional[SearchClient] = None,
+                 fact_store: Optional[FactStore] = None):
         self.llm_client = llm_client or MockLLM()
         self.search_client = search_client or MockSearchClient()
+        self.fact_store = fact_store or FactStore()
 
     def run(self, session_id: str, deck_title: str, tags: List[str]) -> ResearchDossier:
         """
@@ -21,6 +24,7 @@ class ResearchAgent:
         1. Generate queries (LLM)
         2. Execute search (SearchClient)
         3. Summarize results (LLM)
+        4. Store facts (FactStore)
         """
         if not config.ENABLE_RESEARCH:
             logger.info("Research disabled by config. Returning empty dossier.")
@@ -54,6 +58,12 @@ class ResearchAgent:
 
             # 3. Summarize
             dossier = summarize_research(session_id, list(unique_results), self.llm_client)
+            
+            # 4. Store Facts
+            if dossier.facts:
+                self.fact_store.add_facts(dossier.facts)
+                logger.info(f"Stored {len(dossier.facts)} facts in FactStore.")
+
             logger.info("Research complete.")
             return dossier
         except Exception as e:

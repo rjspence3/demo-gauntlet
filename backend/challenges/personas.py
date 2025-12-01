@@ -13,28 +13,32 @@ class ChallengerRegistry:
                 name="The Skeptic",
                 role="Senior Engineer / Architect",
                 style="Critical, technical, detail-oriented. Questions feasibility.",
-                focus_areas=["Technical Feasibility", "Scalability", "Legacy Integration"]
+                focus_areas=["Technical Feasibility", "Scalability", "Legacy Integration"],
+                domain_tags=["architecture", "technical", "integration", "scale"]
             ),
             ChallengerPersona(
                 id="budget_hawk",
                 name="The Budget Hawk",
                 role="CFO / Finance Director",
                 style="Conservative, ROI-focused. Questions value and hidden costs.",
-                focus_areas=["ROI", "TCO", "Licensing", "Implementation Costs"]
+                focus_areas=["ROI", "TCO", "Licensing", "Implementation Costs"],
+                domain_tags=["cost", "finance", "budget", "roi"]
             ),
             ChallengerPersona(
                 id="compliance",
                 name="The Compliance Officer",
                 role="CISO / Legal",
                 style="Risk-averse, strict. Focuses on data safety and regulations.",
-                focus_areas=["GDPR/CCPA", "Data Residency", "Security Certifications"]
+                focus_areas=["GDPR/CCPA", "Data Residency", "Security Certifications"],
+                domain_tags=["security", "compliance", "legal", "risk"]
             ),
             ChallengerPersona(
                 id="executive",
                 name="The Executive",
                 role="VP / C-Level",
                 style="Big-picture, impatient. Focuses on business outcomes.",
-                focus_areas=["Time to Value", "Strategic Alignment", "Competitive Advantage"]
+                focus_areas=["Time to Value", "Strategic Alignment", "Competitive Advantage"],
+                domain_tags=["strategy", "business", "value", "growth"]
             )
         ]
         for p in defaults:

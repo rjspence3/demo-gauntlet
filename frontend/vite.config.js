@@ -6,10 +6,26 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/ingestion': 'http://localhost:8000',
-      '/research': 'http://localhost:8000',
-      '/challenges': 'http://localhost:8000',
-      '/health': 'http://localhost:8000',
+      '/ingestion': {
+        target: 'http://127.0.0.1:8005',
+        changeOrigin: true,
+      },
+      '/research': {
+        target: 'http://127.0.0.1:8005',
+        changeOrigin: true,
+      },
+      '/challenges': {
+        target: 'http://127.0.0.1:8005',
+        changeOrigin: true,
+      },
+      '/evaluation': {
+        target: 'http://127.0.0.1:8005',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://127.0.0.1:8005',
+        changeOrigin: true,
+      },
     }
   }
 })

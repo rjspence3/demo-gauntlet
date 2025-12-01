@@ -14,6 +14,16 @@ export interface UploadResponse {
     status: string;
 }
 
+export interface Fact {
+    id: string;
+    topic: string;
+    text: string;
+    source_url: string;
+    source_title: string;
+    domain: string;
+    snippet: string;
+}
+
 export interface ResearchDossier {
     session_id: string;
     competitor_insights: string[];
@@ -21,6 +31,7 @@ export interface ResearchDossier {
     compliance_notes: string[];
     implementation_risks: string[];
     sources: string[];
+    facts?: Fact[];
 }
 
 export interface ChallengerPersona {
@@ -50,10 +61,16 @@ export interface Challenge {
     ideal_answer: string;
 }
 
+export interface ScoreResponse {
+    score: number;
+    feedback: string;
+}
+
 export interface PersonaScore {
     persona_id: string;
     average_score: number;
     total_challenges: number;
+    component_scores?: Record<string, number>;
 }
 
 export interface SessionReport {
@@ -119,5 +136,10 @@ export const generateChallenges = async (
         slide_index: slideIndex,
         slide_content: slideContent
     });
+    return response.data;
+};
+
+export const getSessionReport = async (sessionId: string): Promise<SessionReport> => {
+    const response = await api.get<SessionReport>(`/evaluation/report/${sessionId}`);
     return response.data;
 };

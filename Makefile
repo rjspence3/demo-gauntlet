@@ -20,7 +20,7 @@ clean:
 	rm -rf backend/__pycache__
 
 run-backend:
-	uvicorn backend.main:app --reload
+	uvicorn backend.main:app --reload --port 8001
 
 run-frontend:
 	cd frontend && npm run dev

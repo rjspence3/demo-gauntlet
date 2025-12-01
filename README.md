@@ -24,10 +24,13 @@
 -   Python 3.10+
 -   Node.js 18+
 -   OpenAI API Key
+-   **OCR Dependencies** (for slide parsing):
+    -   `poppler` (macOS: `brew install poppler`, Ubuntu: `sudo apt-get install poppler-utils`)
+    -   `tesseract` (macOS: `brew install tesseract`, Ubuntu: `sudo apt-get install tesseract-ocr`)
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/imaglide/demoGauntlet.git
+git clone https://github.com/imaglide/demoGauntet.git
 cd demoGauntlet
 ```
 
@@ -62,6 +65,8 @@ make run-frontend
 ```
 
 Access the application at `http://localhost:5173`.
+
+-   **Backend API**: `http://localhost:8001`
 
 ### Development
 -   **Linting**: `make lint`

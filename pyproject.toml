@@ -16,7 +16,9 @@ dependencies = [
     "requests",
     "pydantic-settings",
     "python-multipart",
-    "openai"
+    "openai",
+    "pdf2image",
+    "pytesseract"
 ]
 requires-python = ">=3.9"
 

@@ -3,7 +3,7 @@ import chromadb
 from backend.models.core import Chunk
 from backend.models.embeddings import EmbeddingModel
 
-class VectorStore:
+class DeckRetriever:
     def __init__(self, path: str = "./data/chroma_db"):
         self.client = chromadb.PersistentClient(path=path)
         self.collection = self.client.get_or_create_collection("demo_gauntlet")
@@ -50,7 +50,7 @@ class VectorStore:
             metadatas=metadatas # type: ignore
         )
 
-    def query_similar(self, query: str, n: int = 3) -> List[Chunk]:
+    def get_nearest_chunks(self, query: str, k: int = 5) -> List[Chunk]:
         """
         Queries the store for similar chunks.
         """
@@ -58,25 +58,53 @@ class VectorStore:
 
         results = self.collection.query(
             query_embeddings=[query_embedding], # type: ignore
-            n_results=n
+            n_results=k
         )
+        
+        return self._results_to_chunks(results)
 
+    def get_chunks_for_slide(self, slide_index: int) -> List[Chunk]:
+        """
+        Retrieves all chunks for a specific slide.
+        """
+        results = self.collection.get(
+            where={"slide_index": slide_index}
+        )
+        
+        return self._results_to_chunks(results)
+
+    def _results_to_chunks(self, results: dict) -> List[Chunk]:
         chunks = []
-        ids = cast(List[List[str]], results["ids"])
-        if ids and ids[0]:
-            for i in range(len(ids[0])):
-                chunk_id = ids[0][i]
-                text = results["documents"][0][i] # type: ignore
-                metadata = dict(results["metadatas"][0][i]) # type: ignore
+        if not results.get("ids"):
+            return chunks
+            
+        # Handle both 'get' and 'query' result structures
+        ids = results["ids"]
+        documents = results["documents"]
+        metadatas = results["metadatas"]
+        
+        # Check if it's a query result (list of lists)
+        if isinstance(ids[0], list):
+             ids = ids[0]
+             documents = documents[0]
+             metadatas = metadatas[0]
 
-                # Reconstruct Chunk
-                slide_index = metadata.pop("slide_index", 0)
+        for i in range(len(ids)):
+            chunk_id = ids[i]
+            text = documents[i]
+            metadata = dict(metadatas[i])
 
-                chunks.append(Chunk(
-                    id=chunk_id,
-                    slide_index=slide_index,
-                    text=text,
-                    metadata=metadata
-                ))
+            # Reconstruct Chunk
+            slide_index = metadata.pop("slide_index", 0)
 
+            chunks.append(Chunk(
+                id=chunk_id,
+                slide_index=slide_index,
+                text=text,
+                metadata=metadata
+            ))
+            
         return chunks
+
+# Alias for backward compatibility if needed, but prefer DeckRetriever
+VectorStore = DeckRetriever

@@ -29,7 +29,36 @@ class MockSearchClient(SearchClient):
 class BraveSearchClient(SearchClient):
     def __init__(self, api_key: str):
         self.api_key = api_key
+        self.base_url = "https://api.search.brave.com/res/v1/web/search"
 
     def search(self, query: str, limit: int = 5) -> List[SearchResult]:
-        # Implementation would go here
-        return []
+        headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip",
+            "X-Subscription-Token": self.api_key
+        }
+        params = {
+            "q": query,
+            "count": limit
+        }
+        
+        try:
+            import requests
+            response = requests.get(self.base_url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            results = []
+            if "web" in data and "results" in data["web"]:
+                for item in data["web"]["results"]:
+                    results.append(SearchResult(
+                        title=item.get("title", ""),
+                        url=item.get("url", ""),
+                        snippet=item.get("description", ""),
+                        source="brave"
+                    ))
+            return results
+            
+        except Exception as e:
+            print(f"Brave search failed: {e}")
+            return []

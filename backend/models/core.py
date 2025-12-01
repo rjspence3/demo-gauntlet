@@ -18,6 +18,16 @@ class Chunk:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
+class Fact:
+    id: str
+    topic: str
+    text: str
+    source_url: str
+    source_title: str
+    domain: str
+    snippet: str
+
+@dataclass
 class ResearchDossier:
     session_id: str
     competitor_insights: List[str] = field(default_factory=list)
@@ -25,6 +35,7 @@ class ResearchDossier:
     compliance_notes: List[str] = field(default_factory=list)
     implementation_risks: List[str] = field(default_factory=list)
     sources: List[str] = field(default_factory=list)
+    facts: List[Fact] = field(default_factory=list)
 
 @dataclass
 class ChallengerPersona:
@@ -33,6 +44,8 @@ class ChallengerPersona:
     role: str
     style: str
     focus_areas: List[str]
+    avatar_paths: Dict[str, str] = field(default_factory=dict)
+    domain_tags: List[str] = field(default_factory=list)
 
 @dataclass
 class Challenge:
@@ -41,7 +54,9 @@ class Challenge:
     persona_id: str
     question: str
     ideal_answer: str
-    context_source: str
     difficulty: str
     slide_index: Optional[int] = None
+    evidence: Dict[str, List[str]] = field(default_factory=lambda: {"chunks": [], "facts": []})
+    key_points: List[str] = field(default_factory=list)
+    tone: str = "professional"
     metadata: Dict[str, Any] = field(default_factory=dict)

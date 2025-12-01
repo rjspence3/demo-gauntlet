@@ -44,8 +44,19 @@ def chunk_slide(slide: Slide) -> List[Chunk]:
             if sentence.strip():
                 raw_chunks.append(f"Note: {sentence.strip()}")
 
-    chunks = []
+    MAX_CHUNK_SIZE = 1000 # Characters
+    
+    final_chunks = []
     for content in raw_chunks:
+        if len(content) > MAX_CHUNK_SIZE:
+            # Split large chunks
+            for i in range(0, len(content), MAX_CHUNK_SIZE):
+                final_chunks.append(content[i:i + MAX_CHUNK_SIZE])
+        else:
+            final_chunks.append(content)
+
+    chunks = []
+    for content in final_chunks:
         chunks.append(Chunk(
             id=str(uuid.uuid4()),
             slide_index=slide.index,

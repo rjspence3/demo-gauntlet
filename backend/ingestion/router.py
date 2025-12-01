@@ -60,7 +60,7 @@ async def upload_deck(file: UploadFile = File(...)) -> dict[str, Any]:
 
             # Add tags to chunk metadata
             for chunk in chunks:
-                chunk.metadata["tags"] = tags
+                chunk.metadata["tags"] = ", ".join(tags)
 
             all_chunks.extend(chunks)
 

@@ -1,17 +1,21 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { getSlides, listPersonas, generateChallenges, submitAnswer, Slide, ChallengerPersona, Challenge, ScoreResponse } from '../api/client';
 import { SlideViewer } from './SlideViewer';
-import { Loader2, User, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { ChallengerDetail } from './ChallengerDetail';
+import { Loader2, User, MessageSquare, Send, CheckCircle, AlertCircle, AlertTriangle, Shield, TrendingUp, Cpu, Mic, Volume2, Info } from 'lucide-react';
 import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 interface DemoRoomProps {
     sessionId: string;
+    selectedPersonaIds: string[];
     onFinish: () => void;
 }
 
-export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, onFinish }) => {
+export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaIds, onFinish }) => {
     const [slides, setSlides] = useState<Slide[]>([]);
     const [personas, setPersonas] = useState<ChallengerPersona[]>([]);
+    const [activePersona, setActivePersona] = useState<ChallengerPersona | null>(null);
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [loading, setLoading] = useState(true);
 
@@ -22,7 +26,12 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, onFinish }) => {
     const [scoreResult, setScoreResult] = useState<ScoreResponse | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Load initial data
+    // Evidence Inspector State
+    const [showEvidence, setShowEvidence] = useState(false);
+
+    // Load initial data and challenges
+    const [sessionChallenges, setSessionChallenges] = useState<Challenge[]>([]);
+
     useEffect(() => {
         const init = async () => {
             try {
@@ -31,7 +40,23 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, onFinish }) => {
                     listPersonas()
                 ]);
                 setSlides(slidesData);
-                setPersonas(personasData);
+                const selected = personasData.filter(p => selectedPersonaIds.includes(p.id));
+                setPersonas(selected);
+
+                // Fetch precomputed challenges
+                // We need an endpoint for this or use listChallenges?
+                // Assuming listChallenges exists or we add it.
+                // For MVP, let's assume we can fetch them.
+                // Wait, I didn't add a listChallenges endpoint for the session.
+                // I should probably add it or use a direct fetch if possible?
+                // I'll add a fetch here assuming the endpoint exists or I'll add it to the client.
+                // Let's assume `getChallenges(sessionId)` exists in client.
+                // I need to update client.ts first? Or just fetch directly.
+                const challengesResp = await fetch(`http://localhost:8005/challenges/session/${sessionId}`);
+                if (challengesResp.ok) {
+                    const challengesData = await challengesResp.json();
+                    setSessionChallenges(challengesData);
+                }
             } catch (err) {
                 console.error("Failed to load demo room data", err);
             } finally {
@@ -39,47 +64,46 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, onFinish }) => {
             }
         };
         init();
-    }, [sessionId]);
+    }, [sessionId, selectedPersonaIds]);
 
-    // Generate challenge when slide changes (simulated "random" trigger)
+    // Trigger challenge when slide changes
     useEffect(() => {
         if (slides.length === 0 || personas.length === 0) return;
 
-        const triggerChallenge = async () => {
+        const triggerChallenge = () => {
             setActiveChallenge(null);
+            setActivePersona(null);
             setUserResponse("");
+            setScoreResult(null);
+            setShowEvidence(false);
 
-            // 50% chance to trigger a challenge on slide load (for demo purposes, make it 100% or button triggered)
-            // Let's make it auto-trigger for now to show off the feature
-            setIsGenerating(true);
-            try {
-                // Pick a random persona
-                const randomPersona = personas[Math.floor(Math.random() * personas.length)];
-                const currentSlide = slides[currentSlideIndex];
+            const currentSlide = slides[currentSlideIndex];
 
-                const challenges = await generateChallenges(
-                    sessionId,
-                    randomPersona.id,
-                    currentSlide.index,
-                    currentSlide.text
-                );
+            // Find challenges for this slide
+            const slideChallenges = sessionChallenges.filter(c => c.slide_index === currentSlide.index);
 
-                if (challenges.length > 0) {
-                    setActiveChallenge(challenges[0]);
+            if (slideChallenges.length > 0) {
+                // Pick one randomly or based on priority
+                // Filter by selected personas just in case
+                const relevant = slideChallenges.filter(c => selectedPersonaIds.includes(c.persona_id));
+
+                if (relevant.length > 0) {
+                    const challenge = relevant[Math.floor(Math.random() * relevant.length)];
+                    setActiveChallenge(challenge);
+                    const persona = personas.find(p => p.id === challenge.persona_id);
+                    setActivePersona(persona || null);
                 }
-            } catch (err) {
-                console.error("Failed to generate challenge", err);
-            } finally {
-                setIsGenerating(false);
             }
         };
 
         triggerChallenge();
-    }, [currentSlideIndex, sessionId, slides.length, personas.length]); // Dependencies need care to avoid loops
+    }, [currentSlideIndex, sessionId, slides.length, personas, sessionChallenges]);
 
     const handleNext = () => {
         if (currentSlideIndex < slides.length - 1) {
             setCurrentSlideIndex(prev => prev + 1);
+        } else {
+            onFinish();
         }
     };
 
@@ -90,13 +114,13 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, onFinish }) => {
     };
 
     const handleSubmitResponse = async () => {
-        if (!activeChallenge || !userResponse.trim()) return;
+        if (!activeChallenge || !userResponse.trim() || !activePersona) return;
 
         setIsSubmitting(true);
         try {
             const result = await submitAnswer(
                 sessionId,
-                activeChallenge.persona_id,
+                activePersona.id,
                 activeChallenge.id,
                 userResponse,
                 activeChallenge.ideal_answer
@@ -117,16 +141,17 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, onFinish }) => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-[60vh]">
-                <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-                <p className="text-gray-400">Preparing the Gauntlet...</p>
+            <div className="flex flex-col items-center justify-center h-[80vh]">
+                <Loader2 className="w-16 h-16 text-neon-blue animate-spin mb-4" />
+                <p className="text-gray-400 font-mono animate-pulse">Initializing Simulation...</p>
             </div>
         );
     }
 
     if (slides.length === 0) {
         return (
-            <div className="text-center text-red-400 mt-20">
+            <div className="text-center text-danger-red mt-20 font-mono border border-danger-red/30 p-8 rounded-xl bg-danger-red/5">
+                <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
                 No slides found. Please upload a valid deck.
             </div>
         );
@@ -135,118 +160,168 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, onFinish }) => {
     const currentSlide = slides[currentSlideIndex];
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[80vh] relative p-8">
+        <div className="flex h-screen overflow-hidden bg-cyber-black text-white">
 
-            {/* Main Stage */}
-            <div className="relative z-10">
-                <SlideViewer
-                    slide={currentSlide}
-                    currentSlideIndex={currentSlideIndex}
-                    totalSlides={slides.length}
-                    onNext={handleNext}
-                    onPrev={handlePrev}
-                    onFinish={onFinish}
-                />
-            </div>
-
-            {/* Personas (Avatars) - Positioned around */}
-            <div className="absolute top-10 left-10 flex flex-col items-center opacity-50 hover:opacity-100 transition-opacity">
-                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-500">
-                    <User className="w-8 h-8 text-gray-300" />
+            {/* Left Panel: Slide Viewer (60%) */}
+            <div className="w-[60%] h-full p-6 flex flex-col border-r border-white/10 relative">
+                <div className="flex-grow relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+                    <SlideViewer
+                        slide={currentSlide}
+                        currentSlideIndex={currentSlideIndex}
+                        totalSlides={slides.length}
+                        onNext={handleNext}
+                        onPrev={handlePrev}
+                        onFinish={onFinish}
+                    />
                 </div>
-                <span className="text-xs text-gray-400 mt-2">The Skeptic</span>
-            </div>
 
-            <div className="absolute top-10 right-10 flex flex-col items-center opacity-50 hover:opacity-100 transition-opacity">
-                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-500">
-                    <User className="w-8 h-8 text-gray-300" />
-                </div>
-                <span className="text-xs text-gray-400 mt-2">Budget Hawk</span>
-            </div>
-
-            {/* Active Challenge Overlay / Bubble */}
-            {activeChallenge && (
-                <div className="absolute -bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl animate-in slide-in-from-bottom-10 duration-500 z-50">
-                    <div className="bg-gray-900/95 backdrop-blur-xl border border-red-500/50 rounded-2xl p-6 shadow-2xl shadow-red-900/20">
-                        <div className="flex items-start space-x-4">
-                            <div className="bg-red-500/20 p-3 rounded-full">
-                                <MessageSquare className="w-6 h-6 text-red-400" />
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-bold text-red-400">Challenger Interruption!</h3>
-                                    <span className="text-xs bg-gray-800 px-2 py-1 rounded text-gray-400">
-                                        {personas.find(p => p.id === activeChallenge.persona_id)?.name || "Unknown"}
-                                    </span>
-                                </div>
-                                <p className="text-lg text-white mb-4 font-medium">
-                                    "{activeChallenge.question}"
-                                </p>
-
-                                <div className="relative">
-                                    {!scoreResult ? (
-                                        <>
-                                            <input
-                                                type="text"
-                                                value={userResponse}
-                                                onChange={(e) => setUserResponse(e.target.value)}
-                                                placeholder="Type your response..."
-                                                disabled={isSubmitting}
-                                                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-4 pr-12 text-white focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
-                                                onKeyDown={(e) => e.key === 'Enter' && handleSubmitResponse()}
-                                            />
-                                            <button
-                                                onClick={handleSubmitResponse}
-                                                disabled={isSubmitting || !userResponse.trim()}
-                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-blue-400 hover:text-blue-300 disabled:opacity-30"
-                                            >
-                                                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 animate-in fade-in zoom-in duration-300">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center space-x-2">
-                                                    {scoreResult.score >= 70 ? (
-                                                        <CheckCircle className="w-5 h-5 text-green-500" />
-                                                    ) : (
-                                                        <AlertCircle className="w-5 h-5 text-yellow-500" />
-                                                    )}
-                                                    <span className={clsx(
-                                                        "font-bold text-lg",
-                                                        scoreResult.score >= 85 ? "text-green-400" :
-                                                            scoreResult.score >= 70 ? "text-green-300" :
-                                                                scoreResult.score >= 50 ? "text-yellow-400" : "text-red-400"
-                                                    )}>
-                                                        Score: {scoreResult.score}/100
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    onClick={handleDismissChallenge}
-                                                    className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-white transition-colors"
-                                                >
-                                                    Continue
-                                                </button>
-                                            </div>
-                                            <p className="text-gray-300 text-sm mb-3">{scoreResult.feedback}</p>
-                                            <div className="text-xs text-gray-500 border-t border-gray-700 pt-2">
-                                                <span className="font-semibold text-gray-400">Ideal Answer:</span> {activeChallenge.ideal_answer}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                {/* Slide Controls / Progress */}
+                <div className="mt-4 flex justify-between items-center px-4">
+                    <div className="text-sm text-gray-500 font-mono">
+                        SLIDE {currentSlideIndex + 1} / {slides.length}
+                    </div>
+                    <div className="flex space-x-2">
+                        {/* Add any extra controls here */}
                     </div>
                 </div>
+            </div>
+
+            {/* Right Panel: Challenger Interaction (40%) */}
+            <div className="w-[40%] h-full flex flex-col bg-gray-900/50 relative">
+
+                {/* Challenger Header - List all active personas */}
+                <div className="p-6 border-b border-white/10 flex items-center justify-between bg-black/20">
+                    <div className="flex items-center space-x-2 overflow-x-auto">
+                        {personas.map(p => (
+                            <div key={p.id} className={clsx(
+                                "flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-all",
+                                activePersona?.id === p.id
+                                    ? "bg-neon-blue/20 border-neon-blue text-white"
+                                    : "bg-white/5 border-white/10 text-gray-400 opacity-60"
+                            )}>
+                                <User className="w-3 h-3" />
+                                <span className="text-xs font-bold">{p.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span className="text-xs text-gray-500 font-mono">LIVE</span>
+                    </div>
+                </div>
+
+                {/* Interaction Area */}
+                <div className="flex-grow p-6 overflow-y-auto custom-scrollbar flex flex-col space-y-6">
+
+                    {/* Challenger Bubble */}
+                    {activeChallenge ? (
+                        <div className="flex items-start space-x-3 animate-fade-in">
+                            <div className="w-8 h-8 rounded-full bg-neon-blue/10 flex-shrink-0 flex items-center justify-center mt-1">
+                                <MessageSquare className="w-4 h-4 text-neon-blue" />
+                            </div>
+                            <div className="flex-grow">
+                                <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-none p-4 text-gray-200 leading-relaxed shadow-lg relative group">
+                                    <p>{activeChallenge.question}</p>
+
+                                    {/* Inspector Toggle */}
+                                    <button
+                                        onClick={() => setShowEvidence(true)}
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded"
+                                        title="Inspect Evidence"
+                                    >
+                                        <Info className="w-4 h-4 text-neon-blue" />
+                                    </button>
+                                </div>
+                                <span className="text-[10px] text-gray-600 font-mono mt-1 block ml-2">Just now</span>
+                            </div>
+                        </div>
+                    ) : isGenerating ? (
+                        <div className="flex items-center space-x-3 text-gray-500 animate-pulse">
+                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            </div>
+                            <span className="text-sm font-mono">Analyzing slide...</span>
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-600 mt-10 italic">
+                            Waiting for next slide...
+                        </div>
+                    )}
+
+                    {/* User Response Bubble */}
+                    {(userResponse || scoreResult) && (
+                        <div className="flex items-start space-x-3 justify-end animate-fade-in">
+                            <div className="flex-grow flex flex-col items-end">
+                                <div className="bg-neon-blue/10 border border-neon-blue/20 rounded-2xl rounded-tr-none p-4 text-white leading-relaxed shadow-lg max-w-[90%]">
+                                    <p>{userResponse}</p>
+                                </div>
+                                <span className="text-[10px] text-gray-600 font-mono mt-1 block mr-2">You</span>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center mt-1">
+                                <User className="w-4 h-4 text-gray-300" />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Evaluation Result */}
+                    {scoreResult && (
+                        <div className="animate-slide-up mt-4">
+                            <div className={clsx(
+                                "rounded-xl p-5 border",
+                                scoreResult.score >= 70 ? "bg-green-500/10 border-green-500/30" : "bg-yellow-500/10 border-yellow-500/30"
+                            )}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-xs font-bold uppercase tracking-wider opacity-70">Evaluation</span>
+                                    <span className="text-2xl font-bold font-display">{scoreResult.score}/100</span>
+                                </div>
+                                <p className="text-sm leading-relaxed opacity-90 mb-4">{scoreResult.feedback}</p>
+                                <button
+                                    onClick={handleNext}
+                                    className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    Next Slide
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+
+                {/* Input Area */}
+                <div className="p-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={userResponse}
+                            onChange={(e) => setUserResponse(e.target.value)}
+                            placeholder={activeChallenge ? "Type your answer..." : "Waiting for challenge..."}
+                            disabled={!activeChallenge || !!scoreResult || isSubmitting}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-neon-blue/50 transition-all disabled:opacity-50"
+                            onKeyDown={(e) => e.key === 'Enter' && handleSubmitResponse()}
+                        />
+                        <button
+                            onClick={handleSubmitResponse}
+                            disabled={!activeChallenge || !!scoreResult || isSubmitting || !userResponse.trim()}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-neon-blue hover:bg-neon-blue/10 rounded-lg transition-colors disabled:opacity-30"
+                        >
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            {/* Evidence Inspector Modal */}
+            {showEvidence && activeChallenge && (
+                <ChallengerDetail
+                    challenge={activeChallenge}
+                    onClose={() => setShowEvidence(false)}
+                    // Mocking facts/chunks for now as they are not yet in the Challenge object fully or need fetching
+                    chunks={["Mock chunk from slide context..."]}
+                    facts={[{ topic: "Cost", text: "Competitor X is 20% cheaper.", source_title: "Gartner Report", source_url: "", domain: "pricing", id: "1", snippet: "" }]}
+                />
             )}
 
-            {isGenerating && !activeChallenge && (
-                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800/80 px-4 py-2 rounded-full flex items-center space-x-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                    <span className="text-sm text-gray-300">Analyzing slide...</span>
-                </div>
-            )}
         </div>
     );
 };

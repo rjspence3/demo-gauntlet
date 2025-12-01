@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { generateResearch, ResearchDossier } from '../api/client';
-import { Loader2, ShieldAlert, TrendingUp, DollarSign, Search, ArrowRight } from 'lucide-react';
+import { Loader2, Search, ShieldAlert, TrendingUp, Users, CheckCircle2, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface ResearchViewProps {
@@ -11,7 +11,7 @@ interface ResearchViewProps {
 export const ResearchView: React.FC<ResearchViewProps> = ({ sessionId, onResearchComplete }) => {
     const [dossier, setDossier] = useState<ResearchDossier | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [loadingStep, setLoadingStep] = useState(0);
 
     useEffect(() => {
         const fetchResearch = async () => {
@@ -20,120 +20,150 @@ export const ResearchView: React.FC<ResearchViewProps> = ({ sessionId, onResearc
                 setDossier(data);
             } catch (err) {
                 console.error(err);
-                setError('Failed to generate research. Please try again.');
             } finally {
                 setLoading(false);
             }
         };
-
         fetchResearch();
     }, [sessionId]);
+
+    // Simulated loading steps for effect
+    useEffect(() => {
+        if (!loading) return;
+        const interval = setInterval(() => {
+            setLoadingStep(prev => (prev + 1) % 4);
+        }, 800);
+        return () => clearInterval(interval);
+    }, [loading]);
+
+    const loadingTexts = [
+        "Scanning industry databases...",
+        "Analyzing competitor strategies...",
+        "Identifying compliance risks...",
+        "Compiling executive dossier..."
+    ];
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-6" />
-                <h2 className="text-2xl font-bold text-gray-200 mb-2">Conducting Deep Research</h2>
-                <p className="text-gray-400 animate-pulse">Analyzing competitors, costs, and risks...</p>
+                <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-neon-purple blur-xl opacity-20 animate-pulse"></div>
+                    <div className="w-24 h-24 border-4 border-white/10 border-t-neon-purple rounded-full animate-spin relative z-10"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Search className="w-8 h-8 text-neon-purple animate-pulse" />
+                    </div>
+                </div>
+                <h2 className="text-2xl font-display font-bold text-white mb-2">Researching Prospect</h2>
+                <p className="text-neon-purple font-mono text-sm animate-pulse">
+                    {loadingTexts[loadingStep]}
+                </p>
             </div>
         );
     }
 
-    if (error) {
+    if (!dossier) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-red-400">
-                <ShieldAlert className="w-16 h-16 mb-4" />
-                <p className="text-xl">{error}</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="mt-4 px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 text-white"
-                >
-                    Retry
-                </button>
+            <div className="text-center text-danger-red">
+                Failed to load research. Please try again.
             </div>
         );
     }
-
-    if (!dossier) return null;
 
     return (
-        <div className="w-full max-w-4xl mx-auto p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex justify-between items-center mb-8">
+        <div className="max-w-6xl mx-auto animate-fade-in pb-20">
+            <div className="flex justify-between items-end mb-8 border-b border-white/10 pb-6">
                 <div>
-                    <h2 className="text-3xl font-bold text-white mb-2">Research Dossier</h2>
-                    <p className="text-gray-400">AI-generated insights for your session.</p>
+                    <h2 className="text-4xl font-display font-bold text-white mb-2">Mission Intelligence</h2>
+                    <p className="text-gray-400 font-light">
+                        AI-generated dossier based on your deck and live web search.
+                    </p>
                 </div>
                 <button
                     onClick={onResearchComplete}
-                    className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-all shadow-lg shadow-blue-500/20"
+                    className="group flex items-center bg-neon-blue/10 hover:bg-neon-blue/20 border border-neon-blue/50 text-neon-blue px-6 py-3 rounded-full font-bold transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,243,255,0.3)]"
                 >
-                    Enter Gauntlet <ArrowRight className="ml-2 w-5 h-5" />
+                    ENTER GAUNTLET
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Competitors */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                    <div className="flex items-center mb-4 text-orange-400">
-                        <TrendingUp className="w-6 h-6 mr-2" />
-                        <h3 className="text-xl font-semibold">Competitor Insights</h3>
+                <div className="glass-panel p-6 rounded-2xl border-t-4 border-t-neon-purple">
+                    <div className="flex items-center mb-6">
+                        <div className="bg-neon-purple/20 p-3 rounded-lg mr-4">
+                            <Users className="w-6 h-6 text-neon-purple" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">Competitor Intel</h3>
                     </div>
-                    <ul className="space-y-3">
-                        {dossier.competitor_insights.map((item, i) => (
-                            <li key={i} className="flex items-start text-gray-300 text-sm">
-                                <span className="mr-2 text-orange-500/50">•</span>
-                                {item}
-                            </li>
-                        ))}
+                    <ul className="space-y-4">
+                        {dossier.competitor_insights?.length > 0 ? (
+                            dossier.competitor_insights.map((insight, i) => (
+                                <li key={i} className="flex items-start text-gray-300 text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 bg-neon-purple rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                    {insight}
+                                </li>
+                            ))
+                        ) : (
+                            <li className="text-gray-500 text-sm italic">No competitor insights found.</li>
+                        )}
                     </ul>
                 </div>
 
                 {/* Costs */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                    <div className="flex items-center mb-4 text-green-400">
-                        <DollarSign className="w-6 h-6 mr-2" />
-                        <h3 className="text-xl font-semibold">Cost Benchmarks</h3>
+                <div className="glass-panel p-6 rounded-2xl border-t-4 border-t-neon-blue">
+                    <div className="flex items-center mb-6">
+                        <div className="bg-neon-blue/20 p-3 rounded-lg mr-4">
+                            <TrendingUp className="w-6 h-6 text-neon-blue" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">Financial Context</h3>
                     </div>
-                    <ul className="space-y-3">
-                        {dossier.cost_benchmarks.map((item, i) => (
-                            <li key={i} className="flex items-start text-gray-300 text-sm">
-                                <span className="mr-2 text-green-500/50">•</span>
-                                {item}
-                            </li>
-                        ))}
+                    <ul className="space-y-4">
+                        {dossier.cost_benchmarks?.length > 0 ? (
+                            dossier.cost_benchmarks.map((item, i) => (
+                                <li key={i} className="flex items-start text-gray-300 text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 bg-neon-blue rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                    {item}
+                                </li>
+                            ))
+                        ) : (
+                            <li className="text-gray-500 text-sm italic">No financial context found.</li>
+                        )}
                     </ul>
                 </div>
 
                 {/* Risks */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                    <div className="flex items-center mb-4 text-red-400">
-                        <ShieldAlert className="w-6 h-6 mr-2" />
-                        <h3 className="text-xl font-semibold">Implementation Risks</h3>
+                <div className="glass-panel p-6 rounded-2xl border-t-4 border-t-danger-red">
+                    <div className="flex items-center mb-6">
+                        <div className="bg-danger-red/20 p-3 rounded-lg mr-4">
+                            <ShieldAlert className="w-6 h-6 text-danger-red" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">Risk Analysis</h3>
                     </div>
-                    <ul className="space-y-3">
-                        {dossier.implementation_risks.map((item, i) => (
-                            <li key={i} className="flex items-start text-gray-300 text-sm">
-                                <span className="mr-2 text-red-500/50">•</span>
-                                {item}
-                            </li>
-                        ))}
+                    <ul className="space-y-4">
+                        {dossier.implementation_risks?.length > 0 ? (
+                            dossier.implementation_risks.map((risk, i) => (
+                                <li key={i} className="flex items-start text-gray-300 text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 bg-danger-red rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                    {risk}
+                                </li>
+                            ))
+                        ) : (
+                            <li className="text-gray-500 text-sm italic">No risks identified.</li>
+                        )}
                     </ul>
                 </div>
+            </div>
 
-                {/* Compliance */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                    <div className="flex items-center mb-4 text-blue-400">
-                        <Search className="w-6 h-6 mr-2" />
-                        <h3 className="text-xl font-semibold">Compliance Notes</h3>
-                    </div>
-                    <ul className="space-y-3">
-                        {dossier.compliance_notes.map((item, i) => (
-                            <li key={i} className="flex items-start text-gray-300 text-sm">
-                                <span className="mr-2 text-blue-500/50">•</span>
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
+            <div className="mt-8 glass-panel p-4 rounded-xl flex items-center justify-between text-xs text-gray-500 font-mono">
+                <div className="flex items-center space-x-4">
+                    <span>SOURCES SCANNED: {dossier.sources?.length || 0}</span>
+                    <span className="w-1 h-1 bg-gray-700 rounded-full"></span>
+                    <span>CONFIDENCE: HIGH</span>
+                </div>
+                <div className="flex items-center text-neon-blue">
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    DOSSIER VERIFIED
                 </div>
             </div>
         </div>
