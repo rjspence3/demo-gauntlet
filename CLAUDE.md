@@ -79,3 +79,28 @@ deployment/            # Deployment configs
 - PostgreSQL via SQLModel + Alembic
 - Redis + ARQ for background jobs
 - S3 (boto3) for file storage
+
+---
+
+## Isolation Settings
+
+This project is configured to run alongside other local dev projects without conflicts.
+
+| Resource | Setting | Notes |
+|----------|---------|-------|
+| Docker Redis port | 6381 | Host port mapped to container 6379 |
+| API port | 5003 | Unique per `ports.json` |
+| Frontend port | 3103 | Unique per `ports.json` |
+
+### Docker Commands
+
+```bash
+# Start all services
+docker compose up -d
+
+# Start only Redis
+docker compose up -d redis
+
+# View logs
+docker compose logs -f backend
+```
