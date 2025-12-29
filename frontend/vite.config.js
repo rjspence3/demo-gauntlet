@@ -5,6 +5,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    port: 3103,
+    host: true,
+    allowedHosts: ['demo-gauntlet.test', 'localhost'],
     proxy: {
       '/ingestion': {
         target: 'http://127.0.0.1:8005',
