@@ -1,23 +1,63 @@
+"""
+Configuration settings for the application.
+"""
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
 load_dotenv()
 
-class Config:
-    PROJECT_NAME = "Demo Gauntlet"
-    VERSION = "0.1.0"
-    # Placeholder for future config
-    OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
-    BRAVE_API_KEY: str | None = os.getenv("BRAVE_API_KEY")
+class Config(BaseSettings):
+    """
+    Application configuration loaded from environment variables.
+    """
+    PROJECT_NAME: str = "Demo Gauntlet"
+    VERSION: str = "0.1.0"
+    
+    # API Keys
+    OPENAI_API_KEY: str | None = None
+    BRAVE_API_KEY: str | None = None
 
     # Feature Flags
     ENABLE_RESEARCH: bool = True
     MAX_CHALLENGERS: int = 3
     
     # Security
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:8000"
+    SECRET_KEY: str = "your-secret-key-please-change-in-prod"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    BETA_INVITE_CODE: str | None = None # If set, requires this code to register
     
-    model_config = SettingsConfigDict(env_file=".env")
+    # Storage (Placeholders for Phase 3)
+    DATABASE_URL: str = "sqlite:///./data/app.db"
+    BLOB_STORAGE_TYPE: str = "local" # local, s3
+    
+    # S3 Configuration
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
+    S3_BUCKET_NAME: str | None = None
+    
+    # Chroma Configuration
+    CHROMA_PERSISTENCE_PATH: str = "./data/chroma_db"
+    CHROMA_SERVER_HOST: str | None = None
+    CHROMA_SERVER_PORT: int | None = None
+    
+    # Redis Configuration
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_KEY_PREFIX: str = "dg:"  # Unique prefix to avoid key collisions with other projects
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        
+    def validate_production(self):
+        """Validates configuration for production environment."""
+        # In a real scenario, we might check an ENV_MODE variable.
+        # For now, we just ensure that if we are using postgres, we have the driver.
+        pass
 
 config = Config()

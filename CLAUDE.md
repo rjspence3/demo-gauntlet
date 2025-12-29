@@ -88,6 +88,7 @@ This project is configured to run alongside other local dev projects without con
 
 | Resource | Setting | Notes |
 |----------|---------|-------|
+| Redis key prefix | `dg:` | ARQ queue name prefixed to avoid collisions |
 | Docker Redis port | 6381 | Host port mapped to container 6379 |
 | API port | 5003 | Unique per `ports.json` |
 | Frontend port | 3103 | Unique per `ports.json` |

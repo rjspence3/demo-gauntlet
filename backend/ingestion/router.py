@@ -1,13 +1,21 @@
+"""
+API router for ingestion-related endpoints.
+"""
 import os
 import shutil
 import uuid
-from typing import Any
+from typing import Any, Annotated
 from dataclasses import asdict
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 from backend.ingestion.parser import extract_from_file
 from backend.ingestion.chunker import chunk_slide
 from backend.ingestion.tagger import tag_slide
 from backend.models.store import VectorStore
+# from backend.ingestion.processor import process_deck_upload # Removed
+from backend.api.deps import get_current_user
+from backend.models.db_models import User
+from backend.models.session import SessionStore
+from fastapi import Depends
 
 router = APIRouter(prefix="/ingestion", tags=["ingestion"])
 
@@ -15,7 +23,11 @@ router = APIRouter(prefix="/ingestion", tags=["ingestion"])
 store = VectorStore()
 
 @router.post("/upload")
-async def upload_deck(file: UploadFile = File(...)) -> dict[str, Any]:
+async def upload_deck(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+    file: UploadFile = File(...)
+) -> dict[str, Any]:
     """
     Uploads a deck, parses it, and ingests it into the vector store.
     """
@@ -32,74 +44,52 @@ async def upload_deck(file: UploadFile = File(...)) -> dict[str, Any]:
         )
 
     session_id = str(uuid.uuid4())
-    upload_dir = f"data/decks/{session_id}"
-    os.makedirs(upload_dir, exist_ok=True)
-
-    # Sanitize filename by using a UUID, keep extension
-    safe_filename = f"{uuid.uuid4()}{ext}"
-    file_path = f"{upload_dir}/{safe_filename}"
-
+    # Use BlobStorage to save the file
+    from backend.services.blob_storage import get_blob_storage
+    blob_storage = get_blob_storage()
+    
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        file_path = blob_storage.save_upload(file, session_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}") from e
 
-    # Process synchronously for MVP (can be background task later)
-    try:
-        slides = extract_from_file(file_path)
+    # Offload processing to background task (Arq)
+    await request.app.state.arq_pool.enqueue_job(
+        "process_deck_upload_task", file_path, session_id,
+        _queue_name=request.app.state.arq_queue_name
+    )
 
-        all_chunks = []
-        for slide in slides:
-            # Tag
-            tags = tag_slide(slide)
-            slide.tags = tags
+    return {
+        "session_id": session_id,
+        "filename": file.filename,
+        "slide_count": 0, # Unknown yet
+        "metadata": {},   # Unknown yet
+        "status": "processing"
+    }
 
-            # Chunk
-            chunks = chunk_slide(slide)
-
-            # Add tags to chunk metadata
-            for chunk in chunks:
-                chunk.metadata["tags"] = ", ".join(tags)
-
-            all_chunks.extend(chunks)
-
-        # Store
-        store.add_chunks(all_chunks)
-
-        return {
-            "session_id": session_id,
-            "filename": file.filename,
-            "slide_count": len(slides),
-            "status": "processed"
-        }
-
-    except Exception as e:
-        # Cleanup on failure?
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}") from e
+@router.get("/session/{session_id}/status")
+async def get_session_status(session_id: str) -> dict[str, str]:
+    """
+    Retrieves the processing status of a session.
+    """
+    session_store = SessionStore()
+    status = session_store.get_session_status(session_id)
+    return {"status": status}
 
 @router.get("/session/{session_id}/slides")
 async def get_slides(session_id: str) -> list[dict[str, Any]]:
     """
     Retrieves the slides for a given session.
     """
-    # For MVP, we'll re-parse the file or store slides in a JSON file.
-    # Re-parsing is inefficient but easiest for now since we didn't store raw slides, only chunks.
-    # Better approach: Store slides.json in the session directory.
+    session_store = SessionStore()
     
-    upload_dir = f"data/decks/{session_id}"
-    if not os.path.exists(upload_dir):
-        raise HTTPException(status_code=404, detail="Session not found")
+    slides = session_store.get_slides(session_id)
+    if not slides:
+        # Check if session exists or is still processing
+        status = session_store.get_session_status(session_id)
+        if status == "processing":
+             return [] # Return empty list while processing
+        elif status == "unknown":
+             raise HTTPException(status_code=404, detail="Session not found")
         
-    # Find the file
-    files = os.listdir(upload_dir)
-    if not files:
-        raise HTTPException(status_code=404, detail="No deck found for session")
-        
-    file_path = os.path.join(upload_dir, files[0])
-    
-    try:
-        slides = extract_from_file(file_path)
-        return [asdict(s) for s in slides]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve slides: {str(e)}") from e
+    return [asdict(s) for s in slides]
