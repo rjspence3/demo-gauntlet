@@ -1,16 +1,28 @@
+"""
+Core engine for evaluating user answers.
+"""
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict, Any
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 @dataclass
 class EvaluationResult:
+    """
+    Result of an answer evaluation.
+    """
     score: int
-    breakdown: dict
+    breakdown: Dict[str, Any]
     feedback: str
 
 class EvaluationEngine:
+    """
+    Evaluates answers using semantic similarity and heuristics.
+    """
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        """
+        Initialize the EvaluationEngine.
+        """
         self.model = SentenceTransformer(model_name)
         
         # Weights
@@ -22,6 +34,12 @@ class EvaluationEngine:
         }
 
     def evaluate(self, user_answer: str, ideal_answer: str) -> EvaluationResult:
+        """
+        Evaluate a user's answer against the ideal answer.
+        """
+        if not ideal_answer:
+            return EvaluationResult(score=0, breakdown={}, feedback="No ideal answer provided.")
+
         if not user_answer.strip():
             return EvaluationResult(score=0, breakdown={}, feedback="No answer provided.")
 
@@ -39,6 +57,41 @@ class EvaluationEngine:
 
         # 3. Clarity (Heuristic: Flesch-Kincaid Grade Level approximation)
         clarity = self._calculate_readability(user_answer)
+
+        # 4. Truth Alignment (Heuristic: presence of key terms from ideal answer)
+        # Simple keyword overlap
+        ideal_words = set(ideal_answer.lower().split())
+        user_words = set(user_answer.lower().split())
+        overlap = len(ideal_words.intersection(user_words))
+        truth_alignment = (overlap / len(ideal_words) * 100) if ideal_words else 100
+
+        # Weighted Score
+        final_score = (
+            accuracy * self.weights["accuracy"] +
+            completeness * self.weights["completeness"] +
+            clarity * self.weights["clarity"] +
+            truth_alignment * self.weights["truth_alignment"]
+        )
+        final_score = int(max(0, min(100, final_score)))
+
+        # Feedback
+        if final_score >= 80:
+            feedback = "Good! Your answer aligns perfectly with the research."
+        elif final_score >= 50:
+            feedback = "Okay. Good answer, but could be more specific. Try to reference the research directly."
+        else:
+            feedback = "Weak. You missed the core objection. Review the research dossier."
+            
+        return EvaluationResult(
+            score=final_score,
+            breakdown={
+                "accuracy": int(accuracy),
+                "completeness": int(completeness),
+                "clarity": int(clarity),
+                "truth_alignment": int(truth_alignment)
+            },
+            feedback=feedback
+        )
 
     def _calculate_readability(self, text: str) -> int:
         """
@@ -75,38 +128,3 @@ class EvaluationEngine:
         if count == 0:
             count += 1
         return count
-
-        # 4. Truth Alignment (Heuristic: presence of key terms from ideal answer)
-        # Simple keyword overlap
-        ideal_words = set(ideal_answer.lower().split())
-        user_words = set(user_answer.lower().split())
-        overlap = len(ideal_words.intersection(user_words))
-        truth_alignment = (overlap / len(ideal_words) * 100) if ideal_words else 100
-
-        # Weighted Score
-        final_score = (
-            accuracy * self.weights["accuracy"] +
-            completeness * self.weights["completeness"] +
-            clarity * self.weights["clarity"] +
-            truth_alignment * self.weights["truth_alignment"]
-        )
-        final_score = int(max(0, min(100, final_score)))
-
-        # Feedback
-        if final_score >= 80:
-            feedback = "Excellent! Your answer aligns perfectly with the research."
-        elif final_score >= 50:
-            feedback = "Good answer, but could be more specific. Try to reference the research directly."
-        else:
-            feedback = "Weak answer. You missed the core objection. Review the research dossier."
-            
-        return EvaluationResult(
-            score=final_score,
-            breakdown={
-                "accuracy": int(accuracy),
-                "completeness": int(completeness),
-                "clarity": int(clarity),
-                "truth_alignment": int(truth_alignment)
-            },
-            feedback=feedback
-        )

@@ -1,0 +1,21 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: demo-gauntlet-frontend
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "5"
+    spec:
+      containers:
+      - image: gcr.io/substack-digest-05449/demo-gauntlet-frontend@sha256:4774a061271d1ebb69628510aed9616febb21d824a8151f18712444b69b94a1f
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"

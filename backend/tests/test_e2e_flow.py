@@ -1,31 +1,40 @@
+"""
+Tests for e2e_flow.
+"""
 import os
 import shutil
+import uuid
 from typing import Any
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.models.session import SessionStore
+from backend.models.core import Challenge, Slide, ResearchDossier
 
 client = TestClient(app)
 
-# Use a separate test directory for session store to avoid polluting real data
-TEST_SESSION_DIR = "./data/test_e2e_sessions"
-
-@patch("backend.ingestion.router.store")
-@patch("backend.ingestion.router.extract_from_file")
-@patch("backend.ingestion.router.chunk_slide")
-@patch("backend.ingestion.router.tag_slide")
+@patch("backend.ingestion.router.uuid.uuid4")
+@patch("backend.ingestion.processor.extract_from_file")
+@patch("backend.ingestion.processor.chunk_slide")
+@patch("backend.ingestion.processor.tag_slide")
+@patch("backend.research.router.ChallengerStore")
 @patch("backend.research.router.session_store")
-@patch("backend.challenges.router.session_store")
-@patch("backend.challenges.router.vector_store")
+@patch("backend.research.router.ChallengeGenerator")
+@patch("backend.research.router.FactStore")
+@patch("backend.research.router.DeckRetriever")
+@patch("backend.research.agent.FactStore")
+@patch("backend.ingestion.parser.extract_from_file")
 def test_e2e_flow(
-    mock_vector_store: Any,
-    mock_challenges_session_store: Any,
-    mock_research_session_store: Any,
+    mock_parser_extract: Any,
+    mock_agent_fact_store: Any,
+    mock_router_deck_retriever: Any,
+    mock_router_fact_store: Any,
+    mock_challenge_generator_cls: Any,
+    mock_session_store: Any,
+    mock_challenger_store_cls: Any,
     mock_tag: Any,
     mock_chunk: Any,
-    mock_extract: Any,
-    mock_ingestion_store: Any
+    mock_processor_extract: Any,
+    mock_uuid: Any
 ) -> None:
     """
     Test the full flow:
@@ -33,22 +42,27 @@ def test_e2e_flow(
     2. Generate Research (Research)
     3. Generate Challenges (Challenges)
     """
+    # Fix session ID
     session_id = "e2e_session"
+    mock_uuid.return_value = MagicMock()
+    mock_uuid.return_value.__str__.return_value = session_id
     
     # --- Step 1: Ingestion ---
-    mock_slide = MagicMock()
-    mock_slide.text = "This is a slide about AI."
-    mock_slide.title = "AI Slide"
-    mock_extract.return_value = [mock_slide]
+    # Mock extraction for ingestion (processor uses extract_from_file)
+    mock_slide = Slide(index=0, title="AI Slide", text="This is a slide about AI.", notes="", tags=[])
+    mock_processor_extract.return_value = ([mock_slide], {})
     
     mock_tag.return_value = ["ai"]
     
     mock_chunk_obj = MagicMock()
+    mock_chunk_obj.id = "chunk1"
+    mock_chunk_obj.slide_index = 0  # Fix: Ensure this is an int, not a MagicMock
     mock_chunk_obj.text = "Chunk text"
+    mock_chunk_obj.embedding = [0.1, 0.2, 0.3]
     mock_chunk_obj.metadata = {}
     mock_chunk.return_value = [mock_chunk_obj]
     
-    # Mock file upload
+    # Create dummy file
     with open("test.pdf", "wb") as f:
         f.write(b"dummy pdf content")
         
@@ -60,66 +74,67 @@ def test_e2e_flow(
             )
         assert response.status_code == 200
         data = response.json()
-        assert "session_id" in data
-        # In a real scenario, we'd capture the session_id here. 
-        # For this test, we'll force our known session_id or just verify the flow.
+        assert data["session_id"] == session_id
         
         # --- Step 2: Research ---
-        # Mock session store for research
-        real_store = SessionStore(base_path=TEST_SESSION_DIR)
-        mock_research_session_store.save_dossier.side_effect = real_store.save_dossier
+        # Mock extraction for research (it uses backend.ingestion.parser.extract_from_file)
+        # This corresponds to mock_parser_extract
+        mock_parser_extract.return_value = ([mock_slide], {})
         
-        response = client.post(f"/research/generate/{session_id}")
-        assert response.status_code == 200
-        dossier_data = response.json()
-        assert dossier_data["session_id"] == session_id
-        
-        # Verify it was saved
-        saved_dossier = real_store.get_dossier(session_id)
-        assert saved_dossier is not None
-        
-        # --- Step 3: Challenges ---
-        # Mock session store for challenges (read from the same real store)
-        mock_challenges_session_store.get_dossier.side_effect = real_store.get_dossier
-        mock_challenges_session_store.get_deck_summary.return_value = "Deck Summary"
-        
-        # Mock vector store query
-        mock_chunk = MagicMock()
-        mock_chunk.text = "Vector store context"
-        mock_vector_store.query_similar.return_value = [mock_chunk]
-        
-        # Mock generator via dependency override
-        from backend.challenges.router import get_generator
-        from backend.models.core import Challenge
-        
-        mock_generator = MagicMock()
-        mock_generator.generate_challenges.return_value = [
-            Challenge(
-            id="c1", 
-            session_id="s1", 
-            persona_id="skeptic", 
-            question="Q1", 
-            ideal_answer="A1",
-            context_source="src", 
-            difficulty="medium"
-        )
-        ]
-        app.dependency_overrides[get_generator] = lambda: mock_generator
-        
-        try:
-            response = client.post(
-                "/challenges/generate",
-                json={"session_id": session_id, "persona_id": "skeptic"}
+        # Mock ResearchAgent
+        with patch("backend.research.router.get_agent") as mock_get_agent:
+            mock_agent = MagicMock()
+            mock_agent.run.return_value = ResearchDossier(
+                session_id=session_id,
+                competitor_insights=["Insight 1"]
             )
+            mock_get_agent.return_value = mock_agent
+            
+            response = client.post(f"/research/generate/{session_id}")
             assert response.status_code == 200
-            challenges = response.json()
-            assert len(challenges) > 0
-            assert challenges[0]["persona_id"] == "skeptic"
-        finally:
-            app.dependency_overrides = {}
+            dossier_data = response.json()
+            assert dossier_data["session_id"] == session_id
+        
+        # Configure session store mock for precompute
+        mock_session_store.get_dossier.return_value = ResearchDossier(
+            session_id=session_id,
+            competitor_insights=["Insight 1"]
+        )
+        
+        # Configure challenger store mock
+        mock_challenger_store = mock_challenger_store_cls.return_value
+        mock_challenger_store.get_persona.return_value = MagicMock(id="skeptic")
+
+        # --- Step 3: Challenges ---
+        # Mock generator class instantiation
+        mock_generator_instance = MagicMock()
+        mock_generator_instance.generate_challenges.return_value = [
+            Challenge(
+                id="c1", 
+                session_id=session_id, 
+                persona_id="skeptic", 
+                question="Q1", 
+                ideal_answer="A1",
+                difficulty="medium",
+                evidence={"chunks": [], "facts": []},
+                key_points=["K1"],
+                tone="professional"
+            )
+        ]
+        mock_challenge_generator_cls.return_value = mock_generator_instance
+        
+        response = client.post(
+            f"/research/precompute/{session_id}",
+            json={"persona_ids": ["skeptic"]}
+        )
+        if response.status_code != 200:
+            print(f"Precompute failed: {response.text}")
+        assert response.status_code == 200
+        result = response.json()
+        assert result["status"] == "completed"
         
     finally:
         if os.path.exists("test.pdf"):
             os.remove("test.pdf")
-        if os.path.exists(TEST_SESSION_DIR):
-            shutil.rmtree(TEST_SESSION_DIR)
+        if os.path.exists(f"data/decks/{session_id}"):
+            shutil.rmtree(f"data/decks/{session_id}")

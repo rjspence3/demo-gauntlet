@@ -25,6 +25,29 @@ class Config(BaseSettings):
     # Security
     ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:8000"
     SECRET_KEY: str = "your-secret-key-please-change-in-prod"
+    
+    # ... (other fields)
+
+    @property
+    def is_production(self) -> bool:
+        # Heuristic for production environment
+        return os.getenv("ENV_MODE", "development").lower() == "production"
+
+    def validate_security(self) -> None:
+        """
+        Validates critical security settings.
+        Raises ValueError if configuration is insecure for production.
+        """
+        if self.is_production:
+            if self.SECRET_KEY == "your-secret-key-please-change-in-prod":
+                import logging
+                logging.critical("SECURITY CRITICAL: Running in production with default SECRET_KEY! Application execution stopped.")
+                raise ValueError("SECRET_KEY must be changed from default in production environment.")
+            
+            if not self.OPENAI_API_KEY:
+                # Assuming OpenAI is critical for this app
+                raise ValueError("OPENAI_API_KEY is required in production.")
+
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     BETA_INVITE_CODE: str | None = None # If set, requires this code to register
@@ -52,12 +75,10 @@ class Config(BaseSettings):
 
     @property
     def allowed_origins_list(self) -> list[str]:
-        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
         
-    def validate_production(self):
+    def validate_production(self) -> None:
         """Validates configuration for production environment."""
-        # In a real scenario, we might check an ENV_MODE variable.
-        # For now, we just ensure that if we are using postgres, we have the driver.
-        pass
+        self.validate_security()
 
 config = Config()

@@ -1,10 +1,16 @@
+"""
+Protocol definition for challenger agents.
+"""
 from typing import Protocol, List, Optional
-from backend.models.core import Slide, Challenge, ChallengerPersona, ResearchDossier, Chunk, Fact
+from backend.models.core import Slide, Challenge, ChallengerPersona, ResearchDossier, Chunk, Fact, EvaluationResult
 from backend.models.store import DeckRetriever
 from backend.models.fact_store import FactStore
 from backend.models.llm import LLMClient
 
 class ChallengerAgent(Protocol):
+    """
+    Protocol defining the interface for a challenger agent.
+    """
     id: str
     name: str
     role: str
@@ -37,5 +43,17 @@ class ChallengerAgent(Protocol):
         """
         Online reasoning step:
         - Decides whether to speak on a slide
+        """
+        ...
+
+    def evaluate_response(
+        self,
+        question: Challenge,
+        user_answer: str,
+        llm_client: LLMClient
+    ) -> EvaluationResult:
+        """
+        Online reasoning step:
+        - Evaluates the user's answer
         """
         ...

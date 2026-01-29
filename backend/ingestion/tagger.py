@@ -1,3 +1,6 @@
+"""
+Module for tagging slides based on keywords.
+"""
 from typing import List
 from backend.models.core import Slide
 
@@ -10,6 +13,8 @@ KEYWORD_MAP = {
     "workflow": ["workflow", "process", "step", "automation", "efficiency", "manual", "bottleneck"],
     "ai": ["ai", "ml", "artificial intelligence", "machine learning", "genai", "llm", "model", "training"],
     "data": ["data", "analytics", "reporting", "dashboard", "insight", "warehouse", "lake", "pipeline"],
+    "value": ["value", "roi", "benefit", "impact", "return on investment"],
+    "compliance": ["compliance", "regulatory", "standard", "audit", "gdpr", "soc2", "hipaa", "iso", "policy"],
 }
 
 def tag_slide(slide: Slide) -> List[str]:

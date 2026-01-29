@@ -1,3 +1,6 @@
+"""
+Tests for personas.
+"""
 from typing import Any
 from backend.challenges.personas import ChallengerRegistry
 from backend.models.core import ChallengerPersona

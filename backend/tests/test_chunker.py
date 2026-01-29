@@ -1,3 +1,6 @@
+"""
+Tests for chunker.
+"""
 from backend.models.core import Slide
 from backend.ingestion.chunker import chunk_slide
 

@@ -1,11 +1,25 @@
-from typing import List
+"""
+Module for storing and retrieving research facts using ChromaDB.
+"""
+from typing import List, Any
 import chromadb
 from backend.models.core import Fact
 from backend.models.embeddings import EmbeddingModel
 
 class FactStore:
-    def __init__(self, path: str = "./data/chroma_db"):
-        self.client = chromadb.PersistentClient(path=path)
+    """
+    Manages storage and retrieval of research facts in ChromaDB.
+    """
+    def __init__(self):
+        """
+        Initialize the FactStore.
+        """
+        from backend.config import config
+        
+        if config.CHROMA_SERVER_HOST and config.CHROMA_SERVER_PORT:
+            self.client = chromadb.HttpClient(host=config.CHROMA_SERVER_HOST, port=config.CHROMA_SERVER_PORT)
+        else:
+            self.client = chromadb.PersistentClient(path=config.CHROMA_PERSISTENCE_PATH)
         self.collection = self.client.get_or_create_collection("research_facts")
         self.embedding_model = EmbeddingModel()
 
@@ -51,7 +65,7 @@ class FactStore:
         
         return self._results_to_facts(results)
 
-    def search_facts(self, query: str, k: int = 5) -> List[Fact]:
+    def search_facts(self, query: str, limit: int = 5) -> List[Fact]:
         """
         Semantic search for facts.
         """
@@ -59,13 +73,13 @@ class FactStore:
         
         results = self.collection.query(
             query_embeddings=[query_embedding], # type: ignore
-            n_results=k
+            n_results=limit
         )
         
-        return self._results_to_facts(results) # type: ignore
+        return self._results_to_facts(results)
 
-    def _results_to_facts(self, results: dict) -> List[Fact]:
-        facts = []
+    def _results_to_facts(self, results: Any) -> List[Fact]:
+        facts: List[Fact] = []
         if not results.get("ids"):
             return facts
             

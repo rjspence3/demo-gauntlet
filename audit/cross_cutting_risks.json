@@ -1,0 +1,43 @@
+{
+    "portfolio_top_risks": [
+        {
+            "risk": "Synchronous I/O in Async Paths",
+            "evidence": [
+                "backend/api/routers/auth.py:26 (sync DB)",
+                "backend/ingestion/router.py:52 (sync File Write)",
+                "backend/services/blob_storage.py:44 (sync open)"
+            ],
+            "impact": "server deadlock under load",
+            "severity": "critical"
+        },
+        {
+            "risk": "Broken Object Level Authorization (BOLA)",
+            "evidence": [
+                "backend/api/routers/ingestion.py:79 (get_slides)",
+                "backend/models/db_models.py (No User-Session Link)"
+            ],
+            "impact": "massive data leak",
+            "severity": "critical"
+        },
+        {
+            "risk": "Multi-tenancy Architecture Failure",
+            "evidence": [
+                "backend/models/db_models.py: GameSession schema lacks user_id"
+            ],
+            "impact": "unable to secure user data",
+            "severity": "high"
+        }
+    ],
+    "missing_foundation": [
+        "Async Database Driver (AsyncEngine, AsyncSession)",
+        "Non-blocking File I/O (aiofiles/aioboto3)",
+        "Structured Logging (JSON format)",
+        "RBAC/Policy Engine for Session Ownership"
+    ],
+    "recommended_standards": [
+        "All DB usage in async routes MUST use `await session.exec(...)`",
+        "All Entities MUST have `user_id` FK (unless global static data)",
+        "All API endpoints returning user data MUST verify ownership",
+        "Secrets MUST be loaded from env vars with no default fallbacks in prod"
+    ]
+}

@@ -1,11 +1,47 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/', // Proxy handles the rest
+    baseURL: import.meta.env.VITE_API_URL || '/', // Use env var or fall back to proxy
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+// Add auth token to requests if available
+export const setAuthToken = (token: string | null) => {
+    if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+        delete api.defaults.headers.common['Authorization'];
+    }
+};
+
+// Handle 401 responses
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Clear token and redirect to login if needed
+            // For now, we'll just let the caller handle the error or App.tsx handle the state
+            setAuthToken(null);
+            localStorage.removeItem('token');
+            window.location.href = '/'; // Simple redirect to root/login
+        }
+        return Promise.reject(error);
+    }
+);
+
+export interface Token {
+    access_token: string;
+    token_type: string;
+}
+
+export const loginWithCode = async (inviteCode: string): Promise<Token> => {
+    const response = await api.post<Token>('/auth/login-with-code', {
+        invite_code: inviteCode
+    });
+    return response.data;
+};
 
 export interface UploadResponse {
     session_id: string;
@@ -59,6 +95,10 @@ export interface Challenge {
     difficulty: string;
     slide_index?: number;
     ideal_answer: string;
+    evidence?: {
+        chunks: string[];
+        facts: Fact[];
+    };
 }
 
 export interface ScoreResponse {
@@ -79,6 +119,7 @@ export interface SessionReport {
     total_challenges: number;
     strengths: string[];
     weaknesses: string[];
+    slide_breakdown: Record<number, number>;
 }
 
 export const uploadDeck = async (file: File): Promise<UploadResponse> => {
@@ -104,6 +145,11 @@ export const listPersonas = async (): Promise<ChallengerPersona[]> => {
 
 export const getSlides = async (sessionId: string): Promise<Slide[]> => {
     const response = await api.get<Slide[]>(`/ingestion/session/${sessionId}/slides`);
+    return response.data;
+};
+
+export const getSessionStatus = async (sessionId: string): Promise<{ status: string }> => {
+    const response = await api.get<{ status: string }>(`/ingestion/session/${sessionId}/status`);
     return response.data;
 };
 
@@ -139,7 +185,18 @@ export const generateChallenges = async (
     return response.data;
 };
 
+export const getChallenges = async (sessionId: string): Promise<Challenge[]> => {
+    const response = await api.get<Challenge[]>(`/challenges/session/${sessionId}`);
+    return response.data;
+};
+
 export const getSessionReport = async (sessionId: string): Promise<SessionReport> => {
     const response = await api.get<SessionReport>(`/evaluation/report/${sessionId}`);
     return response.data;
+};
+
+export const precomputeChallenges = async (sessionId: string, personaIds: string[]): Promise<void> => {
+    await api.post(`/research/precompute/${sessionId}`, {
+        persona_ids: personaIds
+    });
 };

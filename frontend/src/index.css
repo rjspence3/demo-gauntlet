@@ -43,14 +43,6 @@ body {
   background: #555;
 }
 
-/* Utilities */
-.glass-panel {
-  background: rgba(20, 20, 25, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
 .text-glow {
   text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
 }

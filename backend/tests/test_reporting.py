@@ -1,7 +1,11 @@
+"""
+Tests for reporting.
+"""
 from unittest.mock import MagicMock
 from backend.evaluation.reporting import ReportingEngine
 
 def test_generate_report() -> None:
+    """Test report generation with mock history."""
     mock_store = MagicMock()
     mock_store.get_history.return_value = [
         {"score": 90, "persona_id": "p1"},
@@ -23,6 +27,7 @@ def test_generate_report() -> None:
     assert p2_score.average_score == 50
 
 def test_generate_report_empty() -> None:
+    """Test report generation with empty history."""
     mock_store = MagicMock()
     mock_store.get_history.return_value = []
     

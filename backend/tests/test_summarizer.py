@@ -1,3 +1,6 @@
+"""
+Tests for summarizer.
+"""
 from unittest.mock import MagicMock
 from backend.research.summarizer import summarize_research
 from backend.research.client import SearchResult
@@ -5,7 +8,7 @@ from backend.research.client import SearchResult
 def test_summarize_research() -> None:
     """Test summarizing research results."""
     mock_llm = MagicMock()
-    mock_llm.generate_json.return_value = {
+    mock_llm.complete_structured.return_value = {
         "competitor_insights": ["Insight 1"],
         "cost_benchmarks": ["Cost 1"],
         "compliance_notes": ["Note 1"],
@@ -21,4 +24,4 @@ def test_summarize_research() -> None:
     assert dossier.session_id == "Session1"
     assert "Insight 1" in dossier.competitor_insights
     assert "U1" in dossier.sources
-    mock_llm.generate_json.assert_called_once()
+    mock_llm.complete_structured.assert_called_once()

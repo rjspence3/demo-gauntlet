@@ -1,3 +1,6 @@
+"""
+Tests for agent.
+"""
 from typing import Any
 from unittest.mock import MagicMock, patch
 from backend.research.agent import ResearchAgent

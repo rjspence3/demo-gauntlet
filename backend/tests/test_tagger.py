@@ -1,3 +1,6 @@
+"""
+Tests for tagger.
+"""
 from backend.models.core import Slide
 from backend.ingestion.tagger import tag_slide
 

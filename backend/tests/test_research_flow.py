@@ -1,3 +1,6 @@
+"""
+Tests for research_flow.
+"""
 from backend.research.agent import ResearchAgent
 from backend.models.llm import MockLLM
 from backend.research.client import MockSearchClient

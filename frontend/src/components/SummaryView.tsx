@@ -1,14 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { getSessionReport, SessionReport } from '../api/client';
-import { Loader2, Trophy, AlertTriangle, RefreshCw, Star, Target, Zap, TrendingDown } from 'lucide-react';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { Loader2, Trophy, RefreshCw, Star, Target, Zap, TrendingDown, Download } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { DGCard, DGButton, DGProgress, DGBadge } from './ui';
 
+/**
+ * Props for the SummaryView component.
+ */
 interface SummaryViewProps {
+    /** The current session ID. */
     sessionId: string;
+    /** Callback to restart the simulation. */
     onRestart: () => void;
 }
 
+/**
+ * Component for displaying the final session report and scores.
+ */
 export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }) => {
     const [report, setReport] = useState<SessionReport | null>(null);
     const [loading, setLoading] = useState(true);
@@ -30,14 +38,14 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <Loader2 className="w-8 h-8 text-neon-blue animate-spin" />
+                <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
             </div>
         );
     }
 
     if (!report) {
         return (
-            <div className="text-center text-danger-red">
+            <div className="text-center text-rose-500">
                 Failed to load report.
             </div>
         );
@@ -53,49 +61,67 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
 
     const grade = getGrade(report.overall_score);
 
+    const getScoreVariant = (score: number): 'success' | 'warning' | 'danger' => {
+        if (score >= 80) return 'success';
+        if (score >= 60) return 'warning';
+        return 'danger';
+    };
+
+    const handleExport = () => {
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gauntlet-report-${sessionId}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     return (
-        <div className="max-w-5xl mx-auto animate-fade-in pb-20 p-6">
-            <div className="text-center mb-12">
-                <h2 className="text-5xl font-display font-bold text-white mb-4">Mission Debrief</h2>
-                <p className="text-gray-400 text-lg">Performance analysis and readiness assessment.</p>
+        <div className="max-w-5xl mx-auto animate-fade-in pb-20 p-4 sm:p-6">
+            <div className="text-center mb-8 sm:mb-12">
+                <h2 className="text-3xl sm:text-5xl font-bold text-white mb-4">Mission Debrief</h2>
+                <p className="text-slate-400 text-base sm:text-lg">Performance analysis and readiness assessment.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
                 {/* Overall Score Card */}
-                <div className="lg:col-span-1 glass-panel rounded-3xl p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-[300px]">
-                    <div className="absolute inset-0 bg-neon-blue/5"></div>
+                <DGCard variant="elevated" className="lg:col-span-1 p-6 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-[280px] sm:min-h-[300px]">
+                    <div className="absolute inset-0 bg-cyan-400/5"></div>
                     <div className="absolute top-0 right-0 p-4 opacity-20">
-                        <Trophy className="w-24 h-24 text-white" />
+                        <Trophy className="w-20 sm:w-24 h-20 sm:h-24 text-white" />
                     </div>
                     <div className="relative z-10 text-center">
-                        <div className="text-8xl font-display font-bold text-white mb-2 text-glow">{grade}</div>
-                        <div className="text-neon-blue font-mono text-xl mb-6 tracking-widest">RANK</div>
-                        <div className="text-5xl font-bold text-white mb-2">{report.overall_score}</div>
-                        <div className="text-xs text-gray-500 uppercase tracking-widest">Overall Score</div>
+                        <div className="text-7xl sm:text-8xl font-bold text-white mb-2">{grade}</div>
+                        <div className="text-cyan-400 font-mono text-lg sm:text-xl mb-6 tracking-widest">RANK</div>
+                        <div className="text-4xl sm:text-5xl font-bold text-white mb-2">{report.overall_score}</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-widest">Overall Score</div>
                     </div>
-                </div>
+                </DGCard>
 
                 {/* Stats & Insights */}
-                <div className="lg:col-span-2 flex flex-col space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center items-center bg-white/5 hover:bg-white/10 transition-colors">
-                            <Target className="w-8 h-8 text-neon-purple mb-3" />
-                            <div className="text-3xl font-bold text-white">{report.total_challenges}</div>
-                            <div className="text-xs text-gray-500 uppercase tracking-wider">Challenges Faced</div>
-                        </div>
-                        <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center items-center bg-white/5 hover:bg-white/10 transition-colors">
-                            <Zap className="w-8 h-8 text-neon-pink mb-3" />
-                            <div className="text-3xl font-bold text-white">
+                <div className="lg:col-span-2 flex flex-col space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                        <DGCard className="p-4 sm:p-6 flex flex-col justify-center items-center">
+                            <Target className="w-6 sm:w-8 h-6 sm:h-8 text-violet-400 mb-2 sm:mb-3" />
+                            <div className="text-2xl sm:text-3xl font-bold text-white">{report.total_challenges}</div>
+                            <div className="text-xs text-slate-500 uppercase tracking-wider text-center">Challenges Faced</div>
+                        </DGCard>
+                        <DGCard className="p-4 sm:p-6 flex flex-col justify-center items-center">
+                            <Zap className="w-6 sm:w-8 h-6 sm:h-8 text-pink-400 mb-2 sm:mb-3" />
+                            <div className="text-2xl sm:text-3xl font-bold text-white">
                                 {report.persona_breakdown.length}
                             </div>
-                            <div className="text-xs text-gray-500 uppercase tracking-wider">Personas Engaged</div>
-                        </div>
+                            <div className="text-xs text-slate-500 uppercase tracking-wider text-center">Personas Engaged</div>
+                        </DGCard>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 flex-grow">
                         {/* Strengths */}
-                        <div className="glass-panel p-6 rounded-2xl border-t-4 border-t-green-500 bg-green-500/5">
-                            <h3 className="text-sm font-bold text-green-400 uppercase mb-4 flex items-center tracking-wider">
+                        <DGCard className="p-4 sm:p-6 border-t-2 border-t-emerald-500">
+                            <h3 className="text-sm font-bold text-emerald-400 uppercase mb-4 flex items-center tracking-wider">
                                 <Star className="w-4 h-4 mr-2" />
                                 Key Strengths
                             </h3>
@@ -103,19 +129,19 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
                                 {report.strengths?.length > 0 ? (
                                     report.strengths.map((s, i) => (
                                         <div key={i} className="flex items-start space-x-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0"></div>
-                                            <span className="text-gray-300 text-sm leading-relaxed">{s}</span>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                                            <span className="text-slate-300 text-sm leading-relaxed">{s}</span>
                                         </div>
                                     ))
                                 ) : (
-                                    <span className="text-gray-500 text-sm italic">No specific strengths listed.</span>
+                                    <span className="text-slate-500 text-sm italic">No specific strengths listed.</span>
                                 )}
                             </div>
-                        </div>
+                        </DGCard>
 
                         {/* Weaknesses */}
-                        <div className="glass-panel p-6 rounded-2xl border-t-4 border-t-danger-red bg-danger-red/5">
-                            <h3 className="text-sm font-bold text-danger-red uppercase mb-4 flex items-center tracking-wider">
+                        <DGCard className="p-4 sm:p-6 border-t-2 border-t-rose-500">
+                            <h3 className="text-sm font-bold text-rose-400 uppercase mb-4 flex items-center tracking-wider">
                                 <TrendingDown className="w-4 h-4 mr-2" />
                                 Areas for Improvement
                             </h3>
@@ -123,90 +149,129 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
                                 {report.weaknesses?.length > 0 ? (
                                     report.weaknesses.map((w, i) => (
                                         <div key={i} className="flex items-start space-x-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-danger-red mt-2 flex-shrink-0"></div>
-                                            <span className="text-gray-300 text-sm leading-relaxed">{w}</span>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 flex-shrink-0"></div>
+                                            <span className="text-slate-300 text-sm leading-relaxed">{w}</span>
                                         </div>
                                     ))
                                 ) : (
-                                    <span className="text-gray-500 text-sm italic">No specific weaknesses listed.</span>
+                                    <span className="text-slate-500 text-sm italic">No specific weaknesses listed.</span>
                                 )}
                             </div>
-                        </div>
+                        </DGCard>
                     </div>
                 </div>
             </div>
 
             {/* Persona Breakdown */}
-            <h3 className="text-2xl font-display font-bold text-white mb-6 flex items-center">
-                <span className="w-1 h-8 bg-neon-blue mr-4 rounded-full"></span>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center">
+                <span className="w-1 h-6 sm:h-8 bg-cyan-400 mr-3 sm:mr-4 rounded-full"></span>
                 Persona Breakdown
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-12 sm:mb-16">
                 {report.persona_breakdown?.length > 0 ? (
                     report.persona_breakdown.map((p) => (
-                        <div key={p.persona_id} className="glass-panel p-6 rounded-2xl hover:border-white/20 transition-all duration-300 group">
-                            <div className="flex justify-between items-start mb-6">
+                        <DGCard key={p.persona_id} className="p-4 sm:p-6 hover:border-slate-600 transition-all duration-300 group">
+                            <div className="flex justify-between items-start mb-4 sm:mb-6">
                                 <div>
-                                    <h4 className="font-bold text-white capitalize text-lg group-hover:text-neon-blue transition-colors">{p.persona_id.replace('_', ' ')}</h4>
-                                    <p className="text-xs text-gray-500 mt-1">{p.total_challenges} interactions</p>
+                                    <h4 className="font-bold text-white capitalize text-base sm:text-lg group-hover:text-cyan-400 transition-colors">
+                                        {p.persona_id.replace('_', ' ')}
+                                    </h4>
+                                    <p className="text-xs text-slate-500 mt-1">{p.total_challenges} interactions</p>
                                 </div>
-                                <div className={clsx(
-                                    "text-2xl font-bold font-display",
-                                    p.average_score >= 80 ? "text-green-400" :
-                                        p.average_score >= 60 ? "text-yellow-400" : "text-danger-red"
+                                <div className={cn(
+                                    "text-xl sm:text-2xl font-bold",
+                                    p.average_score >= 80 ? "text-emerald-400" :
+                                        p.average_score >= 60 ? "text-amber-400" : "text-rose-500"
                                 )}>
                                     {Math.round(p.average_score)}
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                <div className="flex justify-between text-xs text-slate-400 mb-1">
                                     <span>Performance</span>
                                     <span>{Math.round(p.average_score)}%</span>
                                 </div>
-                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                                    <div
-                                        className={clsx(
-                                            "h-full rounded-full transition-all duration-1000",
-                                            p.average_score >= 80 ? "bg-green-500" :
-                                                p.average_score >= 60 ? "bg-yellow-500" : "bg-danger-red"
-                                        )}
-                                        style={{ width: `${p.average_score}%` }}
-                                    ></div>
-                                </div>
+                                <DGProgress
+                                    value={p.average_score}
+                                    variant={getScoreVariant(p.average_score)}
+                                />
                             </div>
 
                             {/* Component Scores (if available) */}
                             {p.component_scores && (
-                                <div className="mt-6 pt-4 border-t border-white/5 grid grid-cols-2 gap-2">
+                                <div className="mt-4 sm:mt-6 pt-4 border-t border-slate-800 grid grid-cols-2 gap-2">
                                     {Object.entries(p.component_scores).map(([key, score]) => (
                                         <div key={key} className="flex justify-between items-center text-xs">
-                                            <span className="text-gray-500 capitalize">{key}</span>
-                                            <span className={clsx(
+                                            <span className="text-slate-500 capitalize">{key}</span>
+                                            <span className={cn(
                                                 "font-mono",
-                                                score >= 8 ? "text-green-400" : score >= 6 ? "text-yellow-400" : "text-danger-red"
+                                                score >= 8 ? "text-emerald-400" : score >= 6 ? "text-amber-400" : "text-rose-500"
                                             )}>{score}/10</span>
                                         </div>
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </DGCard>
                     ))
                 ) : (
-                    <div className="col-span-3 text-center text-gray-500 italic py-8 border border-white/5 rounded-xl bg-white/5">
-                        No persona data available.
-                    </div>
+                    <DGCard className="col-span-full text-center py-8">
+                        <span className="text-slate-500 italic">No persona data available.</span>
+                    </DGCard>
                 )}
             </div>
 
-            <div className="flex justify-center">
-                <button
-                    onClick={onRestart}
-                    className="flex items-center space-x-3 px-10 py-5 bg-white text-black rounded-full font-bold text-lg hover:bg-gray-200 hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+            {/* Slide Breakdown */}
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center">
+                <span className="w-1 h-6 sm:h-8 bg-violet-400 mr-3 sm:mr-4 rounded-full"></span>
+                Slide Performance
+            </h3>
+            <DGCard className="p-4 sm:p-6 mb-12 sm:mb-16">
+                <div className="space-y-3">
+                    {report.slide_breakdown && Object.entries(report.slide_breakdown).map(([index, score]) => (
+                        <div
+                            key={index}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl bg-slate-800/50 gap-2 sm:gap-4"
+                        >
+                            <span className="text-white font-medium">Slide {parseInt(index) + 1}</span>
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <span className={cn(
+                                    "font-mono font-bold",
+                                    score >= 80 ? "text-emerald-400" : score >= 60 ? "text-amber-400" : "text-rose-500"
+                                )}>
+                                    {score}/100
+                                </span>
+                                <DGBadge variant={getScoreVariant(score)}>
+                                    {score >= 80 ? 'Strong' : score >= 60 ? 'Average' : 'Critical'}
+                                </DGBadge>
+                            </div>
+                        </div>
+                    ))}
+                    {(!report.slide_breakdown || Object.keys(report.slide_breakdown).length === 0) && (
+                        <div className="py-8 text-center text-slate-500 italic">
+                            No slide data available.
+                        </div>
+                    )}
+                </div>
+            </DGCard>
+
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                <DGButton
+                    variant="secondary"
+                    size="lg"
+                    onClick={handleExport}
                 >
-                    <RefreshCw className="w-6 h-6" />
-                    <span>RUN NEW SIMULATION</span>
-                </button>
+                    <Download className="w-5 h-5 mr-2" />
+                    Export JSON
+                </DGButton>
+                <DGButton
+                    variant="primary"
+                    size="lg"
+                    onClick={onRestart}
+                >
+                    <RefreshCw className="w-5 h-5 mr-2" />
+                    Run New Simulation
+                </DGButton>
             </div>
         </div>
     );

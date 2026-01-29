@@ -1,53 +1,115 @@
-import json
-import os
-from typing import List, Optional, Dict
+"""
+Module for storing and retrieving challenger personas.
+"""
+from typing import List, Optional, Dict, Any
 from backend.models.core import ChallengerPersona
 
 class ChallengerStore:
-    def __init__(self, data_path: str = "data/challengers.json"):
-        self.data_path = data_path
-        self._ensure_data_file()
-
-    def _ensure_data_file(self):
-        if not os.path.exists(self.data_path):
-            os.makedirs(os.path.dirname(self.data_path), exist_ok=True)
-            with open(self.data_path, "w") as f:
-                json.dump([], f)
+    """
+    Manages persistence of challenger personas using the database.
+    """
+    def __init__(self):
+        """
+        Initialize the ChallengerStore.
+        """
+        from backend.database import engine
+        self.engine = engine
 
     def list_personas(self) -> List[ChallengerPersona]:
-        with open(self.data_path, "r") as f:
-            data = json.load(f)
-        return [ChallengerPersona(**p) for p in data]
+        """List all stored personas."""
+        from sqlmodel import Session, select
+        from backend.models.db_models import DBChallengerPersona
+        
+        with Session(self.engine) as db:
+            statement = select(DBChallengerPersona)
+            results = db.exec(statement).all()
+            return [
+                ChallengerPersona(
+                    id=p.id,
+                    name=p.name,
+                    role=p.role,
+                    style=p.style,
+                    focus_areas=p.focus_areas,
+                    avatar_paths=p.avatar_paths,
+                    domain_tags=p.domain_tags,
+                    agent_prompt=p.agent_prompt
+                )
+                for p in results
+            ]
 
     def get_persona(self, persona_id: str) -> Optional[ChallengerPersona]:
-        personas = self.list_personas()
-        for p in personas:
-            if p.id == persona_id:
-                return p
-        return None
+        """Retrieve a persona by ID."""
+        from sqlmodel import Session
+        from backend.models.db_models import DBChallengerPersona
+        
+        with Session(self.engine) as db:
+            p = db.get(DBChallengerPersona, persona_id)
+            if p:
+                return ChallengerPersona(
+                    id=p.id,
+                    name=p.name,
+                    role=p.role,
+                    style=p.style,
+                    focus_areas=p.focus_areas,
+                    avatar_paths=p.avatar_paths,
+                    domain_tags=p.domain_tags,
+                    agent_prompt=p.agent_prompt
+                )
+            return None
 
     def add_persona(self, persona: ChallengerPersona) -> None:
-        personas = self.list_personas()
-        # Check for duplicate ID
-        if any(p.id == persona.id for p in personas):
-            raise ValueError(f"Persona with ID {persona.id} already exists.")
+        """Add a new persona."""
+        from sqlmodel import Session
+        from backend.models.db_models import DBChallengerPersona
         
-        personas.append(persona)
-        self._save_personas(personas)
+        with Session(self.engine) as db:
+            # Check for duplicate ID
+            if db.get(DBChallengerPersona, persona.id):
+                raise ValueError(f"Persona with ID {persona.id} already exists.")
+            
+            db_persona = DBChallengerPersona(
+                id=persona.id,
+                name=persona.name,
+                role=persona.role,
+                style=persona.style,
+                focus_areas=persona.focus_areas,
+                avatar_paths=persona.avatar_paths,
+                domain_tags=persona.domain_tags,
+                agent_prompt=persona.agent_prompt
+            )
+            db.add(db_persona)
+            db.commit()
 
-    def update_persona(self, persona_id: str, updates: Dict) -> Optional[ChallengerPersona]:
-        personas = self.list_personas()
-        for i, p in enumerate(personas):
-            if p.id == persona_id:
-                # Apply updates
-                updated_data = p.__dict__.copy()
-                updated_data.update(updates)
-                updated_persona = ChallengerPersona(**updated_data)
-                personas[i] = updated_persona
-                self._save_personas(personas)
-                return updated_persona
-        return None
+    def update_persona(self, persona_id: str, updates: Dict[str, Any]) -> Optional[ChallengerPersona]:
+        """Update an existing persona."""
+        from sqlmodel import Session
+        from backend.models.db_models import DBChallengerPersona
+        
+        with Session(self.engine) as db:
+            p = db.get(DBChallengerPersona, persona_id)
+            if not p:
+                return None
+            
+            # Apply updates
+            for key, value in updates.items():
+                if hasattr(p, key):
+                    setattr(p, key, value)
+            
+            db.add(p)
+            db.commit()
+            db.refresh(p)
+            
+            return ChallengerPersona(
+                id=p.id,
+                name=p.name,
+                role=p.role,
+                style=p.style,
+                focus_areas=p.focus_areas,
+                avatar_paths=p.avatar_paths,
+                domain_tags=p.domain_tags,
+                agent_prompt=p.agent_prompt
+            )
 
-    def _save_personas(self, personas: List[ChallengerPersona]):
-        with open(self.data_path, "w") as f:
-            json.dump([p.__dict__ for p in personas], f, indent=2)
+    def _save_personas(self, personas: List[ChallengerPersona]) -> None:
+        # Deprecated, no-op
+        pass

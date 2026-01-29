@@ -1,10 +1,14 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { UploadCloud, FileText, Loader2, AlertCircle, Sparkles, CheckCircle2, Circle } from 'lucide-react';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import { uploadDeck, UploadResponse } from '../api/client';
+import { cn } from '../lib/utils';
+import { uploadDeck, getSessionStatus } from '../api/client';
+import { DGCard, DGStepIndicator } from './ui';
 
+/**
+ * Props for the UploadView component.
+ */
 interface UploadViewProps {
+    /** Callback when upload is complete with the new session ID. */
     onUploadComplete: (sessionId: string) => void;
 }
 
@@ -16,6 +20,9 @@ const PROCESSING_STEPS = [
     "Finalizing simulation environment..."
 ];
 
+/**
+ * Component for handling deck uploads and showing processing progress.
+ */
 export const UploadView: React.FC<UploadViewProps> = ({ onUploadComplete }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -65,7 +72,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUploadComplete }) => {
                 }
                 return prev;
             });
-        }, 3000); // Advance every 3 seconds (simulated)
+        }, 3000);
 
         return () => clearInterval(interval);
     }, [isUploading]);
@@ -79,11 +86,28 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUploadComplete }) => {
         setIsUploading(true);
         try {
             const response = await uploadDeck(file);
-            // Ensure we show the last step before completing
-            setCurrentStep(PROCESSING_STEPS.length - 1);
-            setTimeout(() => {
-                onUploadComplete(response.session_id);
-            }, 1000);
+            const sessionId = response.session_id;
+
+            // Poll for status
+            const pollInterval = setInterval(async () => {
+                try {
+                    const statusRes = await getSessionStatus(sessionId);
+                    if (statusRes.status === 'completed') {
+                        clearInterval(pollInterval);
+                        setCurrentStep(PROCESSING_STEPS.length - 1);
+                        setTimeout(() => {
+                            onUploadComplete(sessionId);
+                        }, 1000);
+                    } else if (statusRes.status === 'failed') {
+                        clearInterval(pollInterval);
+                        setError('Processing failed. Please try again.');
+                        setIsUploading(false);
+                    }
+                } catch (err) {
+                    console.error("Polling error", err);
+                }
+            }, 2000);
+
         } catch (err) {
             console.error(err);
             setError('Failed to upload deck. Please try again.');
@@ -92,28 +116,29 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUploadComplete }) => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-3xl mx-auto p-6 animate-fade-in">
-            <div className="text-center mb-12 relative">
-                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-32 h-32 bg-neon-blue/20 rounded-full blur-3xl"></div>
-                <h1 className="text-6xl font-display font-bold mb-6 relative z-10">
-                    <span className="bg-gradient-to-r from-white via-blue-100 to-gray-400 bg-clip-text text-transparent">
+        <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-3xl mx-auto p-4 sm:p-6 animate-fade-in">
+            <div className="text-center mb-8 sm:mb-12 relative">
+                <DGStepIndicator currentStep={1} totalSteps={5} label="Upload Deck" />
+                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-24 sm:w-32 h-24 sm:h-32 bg-cyan-400/20 rounded-full blur-3xl"></div>
+                <h1 className="text-4xl sm:text-6xl font-bold mb-4 sm:mb-6 relative z-10 mt-4">
+                    <span className="bg-gradient-to-r from-white via-blue-100 to-slate-400 bg-clip-text text-transparent">
                         Demo Gauntlet
                     </span>
                 </h1>
-                <p className="text-gray-400 text-xl max-w-lg mx-auto font-light leading-relaxed">
-                    Upload your pitch deck. <span className="text-neon-blue font-medium">Survive the AI inquisition.</span>
+                <p className="text-slate-400 text-lg sm:text-xl max-w-lg mx-auto font-light leading-relaxed px-4">
+                    Upload your pitch deck. <span className="text-cyan-400 font-medium">Survive the AI inquisition.</span>
                 </p>
             </div>
 
-            <div
+            <DGCard
+                variant="bordered"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={twMerge(
-                    "w-full glass-panel rounded-3xl p-16 transition-all duration-500 flex flex-col items-center justify-center cursor-pointer group relative overflow-hidden min-h-[400px]",
-                    isDragging
-                        ? "border-neon-blue bg-neon-blue/5 scale-[1.02] shadow-[0_0_30px_rgba(0,243,255,0.15)]"
-                        : "hover:border-neon-blue/50 hover:bg-white/5",
+                className={cn(
+                    "w-full p-8 sm:p-16 transition-all duration-500 flex flex-col items-center justify-center cursor-pointer group relative overflow-hidden min-h-[300px] sm:min-h-[400px]",
+                    isDragging && "border-cyan-400 bg-cyan-400/5 scale-[1.02] shadow-[0_0_30px_rgba(34,211,238,0.15)]",
+                    !isDragging && !isUploading && "hover:border-cyan-400/50 hover:bg-slate-800/50",
                     isUploading && "pointer-events-none cursor-default"
                 )}
             >
@@ -127,37 +152,37 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUploadComplete }) => {
 
                 {isUploading ? (
                     <div className="flex flex-col items-start w-full max-w-md z-10">
-                        <div className="flex items-center mb-8 w-full justify-center">
+                        <div className="flex items-center mb-6 sm:mb-8 w-full justify-center">
                             <div className="relative">
-                                <div className="absolute inset-0 bg-neon-blue blur-xl opacity-20 animate-pulse"></div>
-                                <Loader2 className="w-12 h-12 text-neon-blue animate-spin relative z-10" />
+                                <div className="absolute inset-0 bg-cyan-400 blur-xl opacity-20 animate-pulse"></div>
+                                <Loader2 className="w-10 sm:w-12 h-10 sm:h-12 text-cyan-400 animate-spin relative z-10" />
                             </div>
-                            <h3 className="text-2xl font-bold text-white ml-4 font-display">Building Simulation...</h3>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white ml-3 sm:ml-4">Building Simulation...</h3>
                         </div>
 
-                        <div className="w-full space-y-4">
+                        <div className="w-full space-y-3 sm:space-y-4">
                             {PROCESSING_STEPS.map((step, index) => {
                                 const isCompleted = index < currentStep;
                                 const isCurrent = index === currentStep;
                                 const isPending = index > currentStep;
 
                                 return (
-                                    <div key={index} className={twMerge(
+                                    <div key={index} className={cn(
                                         "flex items-center transition-all duration-500",
                                         isPending ? "opacity-30" : "opacity-100"
                                     )}>
-                                        <div className="mr-4">
+                                        <div className="mr-3 sm:mr-4 flex-shrink-0">
                                             {isCompleted ? (
-                                                <CheckCircle2 className="w-6 h-6 text-neon-green" />
+                                                <CheckCircle2 className="w-5 sm:w-6 h-5 sm:h-6 text-emerald-400" />
                                             ) : isCurrent ? (
-                                                <div className="w-6 h-6 rounded-full border-2 border-neon-blue border-t-transparent animate-spin" />
+                                                <div className="w-5 sm:w-6 h-5 sm:h-6 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
                                             ) : (
-                                                <Circle className="w-6 h-6 text-gray-600" />
+                                                <Circle className="w-5 sm:w-6 h-5 sm:h-6 text-slate-600" />
                                             )}
                                         </div>
-                                        <span className={twMerge(
-                                            "font-mono text-sm",
-                                            isCurrent ? "text-neon-blue font-bold" : "text-gray-300"
+                                        <span className={cn(
+                                            "font-mono text-xs sm:text-sm",
+                                            isCurrent ? "text-cyan-400 font-bold" : "text-slate-300"
                                         )}>
                                             {step}
                                         </span>
@@ -168,14 +193,14 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUploadComplete }) => {
                     </div>
                 ) : (
                     <label htmlFor="file-upload" className="flex flex-col items-center cursor-pointer w-full h-full z-10">
-                        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 group-hover:border-neon-blue/30 group-hover:bg-neon-blue/10 transition-all duration-300 mb-8 relative">
-                            <div className="absolute inset-0 bg-neon-blue/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            <UploadCloud className="w-16 h-16 text-gray-300 group-hover:text-neon-blue transition-colors relative z-10" />
+                        <div className="p-4 sm:p-6 rounded-xl bg-slate-800/50 border border-slate-700 group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10 transition-all duration-300 mb-6 sm:mb-8 relative">
+                            <div className="absolute inset-0 bg-cyan-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <UploadCloud className="w-12 sm:w-16 h-12 sm:h-16 text-slate-300 group-hover:text-cyan-400 transition-colors relative z-10" />
                         </div>
-                        <p className="text-2xl font-bold text-white mb-3 group-hover:text-neon-blue transition-colors font-display">
+                        <p className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-cyan-400 transition-colors text-center">
                             Drag & drop your deck
                         </p>
-                        <p className="text-gray-500 group-hover:text-gray-400 transition-colors">
+                        <p className="text-slate-500 group-hover:text-slate-400 transition-colors text-sm sm:text-base">
                             Supports PDF and PPTX
                         </p>
                     </label>
@@ -188,22 +213,24 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUploadComplete }) => {
                         backgroundSize: '20px 20px'
                     }}>
                 </div>
-            </div>
+            </DGCard>
 
             {error && (
-                <div className="mt-8 p-4 bg-danger-red/10 border border-danger-red/20 rounded-xl flex items-center text-danger-red animate-slide-up backdrop-blur-sm">
-                    <AlertCircle className="w-5 h-5 mr-3" />
-                    <span className="font-medium">{error}</span>
-                </div>
+                <DGCard className="mt-6 sm:mt-8 p-3 sm:p-4 bg-rose-500/10 border-rose-500/20 animate-slide-up">
+                    <div className="flex items-center text-rose-400">
+                        <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
+                        <span className="font-medium text-sm sm:text-base">{error}</span>
+                    </div>
+                </DGCard>
             )}
 
-            <div className="mt-12 flex items-center space-x-8 text-sm text-gray-500 font-mono">
+            <div className="mt-8 sm:mt-12 flex items-center space-x-6 sm:space-x-8 text-xs sm:text-sm text-slate-500 font-mono">
                 <div className="flex items-center">
-                    <Sparkles className="w-4 h-4 mr-2 text-neon-purple" />
+                    <Sparkles className="w-4 h-4 mr-2 text-violet-400" />
                     <span>AI Analysis</span>
                 </div>
                 <div className="flex items-center">
-                    <FileText className="w-4 h-4 mr-2 text-neon-blue" />
+                    <FileText className="w-4 h-4 mr-2 text-cyan-400" />
                     <span>Smart Parsing</span>
                 </div>
             </div>

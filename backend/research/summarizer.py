@@ -1,3 +1,6 @@
+"""
+Module for summarizing research results.
+"""
 import uuid
 from typing import List
 from backend.models.core import ResearchDossier, Fact
@@ -43,7 +46,7 @@ def summarize_research(session_id: str, results: List[SearchResult],
     }}
     """
 
-    response = llm_client.generate_json(prompt)
+    response = llm_client.complete_structured(prompt)
     
     facts = []
     raw_facts = response.get("facts", [])

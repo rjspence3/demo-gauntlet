@@ -1,17 +1,26 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { getSlides, listPersonas, generateChallenges, submitAnswer, Slide, ChallengerPersona, Challenge, ScoreResponse } from '../api/client';
+import React, { useEffect, useState } from 'react';
+import { getSlides, listPersonas, getChallenges, submitAnswer, Slide, ChallengerPersona, Challenge, ScoreResponse } from '../api/client';
 import { SlideViewer } from './SlideViewer';
 import { ChallengerDetail } from './ChallengerDetail';
-import { Loader2, User, MessageSquare, Send, CheckCircle, AlertCircle, AlertTriangle, Shield, TrendingUp, Cpu, Mic, Volume2, Info } from 'lucide-react';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { Loader2, User, MessageSquare, Send, AlertTriangle, Info, Zap, ArrowRight } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { DGCard, DGButton, DGIconButton } from './ui';
 
+/**
+ * Props for the DemoRoom component.
+ */
 interface DemoRoomProps {
+    /** The current session ID. */
     sessionId: string;
+    /** List of IDs of selected personas. */
     selectedPersonaIds: string[];
+    /** Callback when the simulation is finished. */
     onFinish: () => void;
 }
 
+/**
+ * Main simulation component where the user interacts with challengers.
+ */
 export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaIds, onFinish }) => {
     const [slides, setSlides] = useState<Slide[]>([]);
     const [personas, setPersonas] = useState<ChallengerPersona[]>([]);
@@ -43,20 +52,8 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                 const selected = personasData.filter(p => selectedPersonaIds.includes(p.id));
                 setPersonas(selected);
 
-                // Fetch precomputed challenges
-                // We need an endpoint for this or use listChallenges?
-                // Assuming listChallenges exists or we add it.
-                // For MVP, let's assume we can fetch them.
-                // Wait, I didn't add a listChallenges endpoint for the session.
-                // I should probably add it or use a direct fetch if possible?
-                // I'll add a fetch here assuming the endpoint exists or I'll add it to the client.
-                // Let's assume `getChallenges(sessionId)` exists in client.
-                // I need to update client.ts first? Or just fetch directly.
-                const challengesResp = await fetch(`http://localhost:8005/challenges/session/${sessionId}`);
-                if (challengesResp.ok) {
-                    const challengesData = await challengesResp.json();
-                    setSessionChallenges(challengesData);
-                }
+                const challengesData = await getChallenges(sessionId);
+                setSessionChallenges(challengesData);
             } catch (err) {
                 console.error("Failed to load demo room data", err);
             } finally {
@@ -83,8 +80,6 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
             const slideChallenges = sessionChallenges.filter(c => c.slide_index === currentSlide.index);
 
             if (slideChallenges.length > 0) {
-                // Pick one randomly or based on priority
-                // Filter by selected personas just in case
                 const relevant = slideChallenges.filter(c => selectedPersonaIds.includes(c.persona_id));
 
                 if (relevant.length > 0) {
@@ -133,38 +128,32 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
         }
     };
 
-    const handleDismissChallenge = () => {
-        setActiveChallenge(null);
-        setScoreResult(null);
-        setUserResponse("");
-    };
-
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-[80vh]">
-                <Loader2 className="w-16 h-16 text-neon-blue animate-spin mb-4" />
-                <p className="text-gray-400 font-mono animate-pulse">Initializing Simulation...</p>
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-12 sm:w-16 h-12 sm:h-16 text-cyan-400 animate-spin mb-4" />
+                <p className="text-slate-400 font-mono animate-pulse text-sm sm:text-base">Initializing Simulation...</p>
             </div>
         );
     }
 
     if (slides.length === 0) {
         return (
-            <div className="text-center text-danger-red mt-20 font-mono border border-danger-red/30 p-8 rounded-xl bg-danger-red/5">
-                <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
-                No slides found. Please upload a valid deck.
-            </div>
+            <DGCard className="text-center mt-20 p-6 sm:p-8 max-w-md mx-auto border-rose-500/30">
+                <AlertTriangle className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-4 text-rose-500" />
+                <p className="text-rose-400 font-mono text-sm sm:text-base">No slides found. Please upload a valid deck.</p>
+            </DGCard>
         );
     }
 
     const currentSlide = slides[currentSlideIndex];
 
     return (
-        <div className="flex h-screen overflow-hidden bg-cyber-black text-white">
+        <div className="flex flex-col lg:flex-row min-h-[calc(100vh-8rem)] gap-4 lg:gap-8">
 
-            {/* Left Panel: Slide Viewer (60%) */}
-            <div className="w-[60%] h-full p-6 flex flex-col border-r border-white/10 relative">
-                <div className="flex-grow relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+            {/* Left Panel: Slide Viewer */}
+            <div className="w-full lg:w-[58%] flex flex-col">
+                <div className="flex-grow relative rounded-xl overflow-hidden h-[350px] sm:h-[450px] lg:h-auto">
                     <SlideViewer
                         slide={currentSlide}
                         currentSlideIndex={currentSlideIndex}
@@ -175,140 +164,186 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                     />
                 </div>
 
-                {/* Slide Controls / Progress */}
-                <div className="mt-4 flex justify-between items-center px-4">
-                    <div className="text-sm text-gray-500 font-mono">
+                {/* Slide Progress - Mobile */}
+                <div className="mt-3 flex justify-center items-center px-4 lg:hidden">
+                    <span className="text-xs text-slate-500 font-mono">
                         SLIDE {currentSlideIndex + 1} / {slides.length}
-                    </div>
-                    <div className="flex space-x-2">
-                        {/* Add any extra controls here */}
-                    </div>
+                    </span>
                 </div>
             </div>
 
-            {/* Right Panel: Challenger Interaction (40%) */}
-            <div className="w-[40%] h-full flex flex-col bg-gray-900/50 relative">
+            {/* Right Panel: Challenger Interaction */}
+            <div className="w-full lg:w-[42%] flex flex-col min-h-[400px] lg:min-h-0">
+                <DGCard className="flex-grow flex flex-col overflow-hidden">
 
-                {/* Challenger Header - List all active personas */}
-                <div className="p-6 border-b border-white/10 flex items-center justify-between bg-black/20">
-                    <div className="flex items-center space-x-2 overflow-x-auto">
-                        {personas.map(p => (
-                            <div key={p.id} className={clsx(
-                                "flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-all",
-                                activePersona?.id === p.id
-                                    ? "bg-neon-blue/20 border-neon-blue text-white"
-                                    : "bg-white/5 border-white/10 text-gray-400 opacity-60"
+                    {/* Minimal Header - personas as dots, active one named */}
+                    <div className="px-4 sm:px-5 py-3 border-b border-slate-800/50 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5">
+                                {personas.map(p => (
+                                    <div
+                                        key={p.id}
+                                        className={cn(
+                                            "w-2.5 h-2.5 rounded-full transition-all",
+                                            activePersona?.id === p.id
+                                                ? "bg-cyan-400 ring-2 ring-cyan-400/30"
+                                                : "bg-slate-600"
+                                        )}
+                                        title={p.name}
+                                    />
+                                ))}
+                            </div>
+                            {activePersona && (
+                                <span className="text-sm font-medium text-white">
+                                    {activePersona.name}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <DGButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={onFinish}
+                                className="text-xs text-slate-400 hover:text-white px-2 py-1 h-auto"
+                            >
+                                Ready for Recommendation?
+                                <ArrowRight className="w-3 h-3 ml-1" />
+                            </DGButton>
+                            <div className="flex items-center gap-1.5 hidden sm:flex">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Live</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Interaction Area */}
+                    <div className="flex-grow p-4 sm:p-6 overflow-y-auto flex flex-col">
+
+                        {/* Challenge Question - PRIMARY FOCAL POINT */}
+                        {activeChallenge ? (
+                            <div className="animate-fade-in mb-auto">
+                                {/* Challenger identity */}
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-8 h-8 rounded-full bg-cyan-400/10 flex items-center justify-center">
+                                        <MessageSquare className="w-4 h-4 text-cyan-400" />
+                                    </div>
+                                    <span className="text-xs font-medium text-slate-400">
+                                        {activePersona?.role || 'Challenger'}
+                                    </span>
+                                </div>
+
+                                {/* The Question - HERO ELEMENT */}
+                                <div className="relative group">
+                                    <div className="absolute -inset-px bg-gradient-to-r from-cyan-400/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <DGCard variant="bordered" className="relative p-4 sm:p-5 border-slate-700/50">
+                                        <p className="text-base sm:text-lg text-white leading-relaxed font-medium">
+                                            {activeChallenge.question}
+                                        </p>
+                                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <DGIconButton
+                                                icon={<Info className="w-4 h-4" />}
+                                                ariaLabel="View evidence details"
+                                                tooltip="Inspect Evidence"
+                                                size="sm"
+                                                onClick={() => setShowEvidence(true)}
+                                            />
+                                        </div>
+                                    </DGCard>
+                                </div>
+                            </div>
+                        ) : isGenerating ? (
+                            <div className="flex-grow flex items-center justify-center">
+                                <div className="flex items-center gap-3 text-slate-400">
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span className="text-sm font-mono">Analyzing slide...</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
+                                <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center mb-3">
+                                    <Zap className="w-5 h-5 text-slate-600" />
+                                </div>
+                                <p className="text-slate-500 text-sm">No challenge on this slide</p>
+                                <p className="text-slate-600 text-xs mt-1">Navigate to trigger questions</p>
+                            </div>
+                        )}
+
+                        {/* Spacer to push response/score to bottom when challenge exists */}
+                        {activeChallenge && <div className="flex-grow min-h-4" />}
+
+                        {/* User Response Bubble */}
+                        {scoreResult && userResponse && (
+                            <div className="flex justify-end mb-4 animate-fade-in">
+                                <div className="max-w-[85%]">
+                                    <div className="bg-slate-800/80 rounded-xl rounded-tr-sm px-4 py-3">
+                                        <p className="text-slate-200 text-sm leading-relaxed">{userResponse}</p>
+                                    </div>
+                                    <span className="text-[10px] text-slate-600 mt-1 block text-right mr-1">Your answer</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Evaluation Result - Secondary prominence */}
+                        {scoreResult && (
+                            <DGCard className={cn(
+                                "animate-slide-up",
+                                scoreResult.score >= 70
+                                    ? "bg-emerald-500/10 border-emerald-500/30"
+                                    : "bg-amber-500/10 border-amber-500/30"
                             )}>
-                                <User className="w-3 h-3" />
-                                <span className="text-xs font-bold">{p.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span className="text-xs text-gray-500 font-mono">LIVE</span>
-                    </div>
-                </div>
-
-                {/* Interaction Area */}
-                <div className="flex-grow p-6 overflow-y-auto custom-scrollbar flex flex-col space-y-6">
-
-                    {/* Challenger Bubble */}
-                    {activeChallenge ? (
-                        <div className="flex items-start space-x-3 animate-fade-in">
-                            <div className="w-8 h-8 rounded-full bg-neon-blue/10 flex-shrink-0 flex items-center justify-center mt-1">
-                                <MessageSquare className="w-4 h-4 text-neon-blue" />
-                            </div>
-                            <div className="flex-grow">
-                                <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-none p-4 text-gray-200 leading-relaxed shadow-lg relative group">
-                                    <p>{activeChallenge.question}</p>
-
-                                    {/* Inspector Toggle */}
-                                    <button
-                                        onClick={() => setShowEvidence(true)}
-                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded"
-                                        title="Inspect Evidence"
+                                <div className="p-4 sm:p-5">
+                                    <div className="flex items-baseline justify-between mb-2">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Score</span>
+                                        <span className={cn(
+                                            "text-3xl sm:text-4xl font-bold tabular-nums",
+                                            scoreResult.score >= 70 ? "text-emerald-400" : "text-amber-400"
+                                        )}>
+                                            {scoreResult.score}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-slate-300 leading-relaxed mb-4">{scoreResult.feedback}</p>
+                                    <DGButton
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={handleNext}
+                                        className="w-full"
                                     >
-                                        <Info className="w-4 h-4 text-neon-blue" />
-                                    </button>
+                                        {currentSlideIndex < slides.length - 1 ? 'Next Slide' : 'View Results'}
+                                    </DGButton>
                                 </div>
-                                <span className="text-[10px] text-gray-600 font-mono mt-1 block ml-2">Just now</span>
-                            </div>
-                        </div>
-                    ) : isGenerating ? (
-                        <div className="flex items-center space-x-3 text-gray-500 animate-pulse">
-                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            </div>
-                            <span className="text-sm font-mono">Analyzing slide...</span>
-                        </div>
-                    ) : (
-                        <div className="text-center text-gray-600 mt-10 italic">
-                            Waiting for next slide...
-                        </div>
-                    )}
-
-                    {/* User Response Bubble */}
-                    {(userResponse || scoreResult) && (
-                        <div className="flex items-start space-x-3 justify-end animate-fade-in">
-                            <div className="flex-grow flex flex-col items-end">
-                                <div className="bg-neon-blue/10 border border-neon-blue/20 rounded-2xl rounded-tr-none p-4 text-white leading-relaxed shadow-lg max-w-[90%]">
-                                    <p>{userResponse}</p>
-                                </div>
-                                <span className="text-[10px] text-gray-600 font-mono mt-1 block mr-2">You</span>
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center mt-1">
-                                <User className="w-4 h-4 text-gray-300" />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Evaluation Result */}
-                    {scoreResult && (
-                        <div className="animate-slide-up mt-4">
-                            <div className={clsx(
-                                "rounded-xl p-5 border",
-                                scoreResult.score >= 70 ? "bg-green-500/10 border-green-500/30" : "bg-yellow-500/10 border-yellow-500/30"
-                            )}>
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-bold uppercase tracking-wider opacity-70">Evaluation</span>
-                                    <span className="text-2xl font-bold font-display">{scoreResult.score}/100</span>
-                                </div>
-                                <p className="text-sm leading-relaxed opacity-90 mb-4">{scoreResult.feedback}</p>
-                                <button
-                                    onClick={handleNext}
-                                    className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold transition-colors"
-                                >
-                                    Next Slide
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                </div>
-
-                {/* Input Area */}
-                <div className="p-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={userResponse}
-                            onChange={(e) => setUserResponse(e.target.value)}
-                            placeholder={activeChallenge ? "Type your answer..." : "Waiting for challenge..."}
-                            disabled={!activeChallenge || !!scoreResult || isSubmitting}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-neon-blue/50 transition-all disabled:opacity-50"
-                            onKeyDown={(e) => e.key === 'Enter' && handleSubmitResponse()}
-                        />
-                        <button
-                            onClick={handleSubmitResponse}
-                            disabled={!activeChallenge || !!scoreResult || isSubmitting || !userResponse.trim()}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-neon-blue hover:bg-neon-blue/10 rounded-lg transition-colors disabled:opacity-30"
-                        >
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                        </button>
+                            </DGCard>
+                        )}
                     </div>
-                </div>
 
+                    {/* Input Area - Anchored at bottom */}
+                    <div className={cn(
+                        "p-4 sm:p-5 border-t border-slate-800/50 bg-slate-900/30",
+                        (!activeChallenge || scoreResult) && "opacity-50 pointer-events-none"
+                    )}>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={userResponse}
+                                onChange={(e) => setUserResponse(e.target.value)}
+                                placeholder={activeChallenge && !scoreResult ? "Type your response..." : "Waiting for challenge..."}
+                                disabled={!activeChallenge || !!scoreResult || isSubmitting}
+                                className="w-full bg-slate-800/80 border border-slate-700/50 rounded-xl py-3.5 px-4 pr-14 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50 transition-all disabled:opacity-60 text-sm sm:text-base"
+                                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmitResponse()}
+                            />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                <DGIconButton
+                                    icon={isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                    ariaLabel={isSubmitting ? "Submitting response" : "Submit response"}
+                                    size="sm"
+                                    variant={userResponse.trim() ? "active" : "default"}
+                                    disabled={!activeChallenge || !!scoreResult || isSubmitting || !userResponse.trim()}
+                                    onClick={handleSubmitResponse}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                </DGCard>
             </div>
 
             {/* Evidence Inspector Modal */}
@@ -316,9 +351,8 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                 <ChallengerDetail
                     challenge={activeChallenge}
                     onClose={() => setShowEvidence(false)}
-                    // Mocking facts/chunks for now as they are not yet in the Challenge object fully or need fetching
-                    chunks={["Mock chunk from slide context..."]}
-                    facts={[{ topic: "Cost", text: "Competitor X is 20% cheaper.", source_title: "Gartner Report", source_url: "", domain: "pricing", id: "1", snippet: "" }]}
+                    chunks={activeChallenge.evidence?.chunks || []}
+                    facts={activeChallenge.evidence?.facts || []}
                 />
             )}
 

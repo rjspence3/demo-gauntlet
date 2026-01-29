@@ -1,6 +1,9 @@
+"""
+Module for chunking slides into smaller text units.
+"""
 import re
 import uuid
-from typing import List
+from typing import List, Dict, Any
 from backend.models.core import Slide, Chunk
 
 def chunk_slide(slide: Slide) -> List[Chunk]:
@@ -42,6 +45,9 @@ def chunk_slide(slide: Slide) -> List[Chunk]:
         notes_sentences = re.split(r'(?<=[.!?])\s+', slide.notes)
         for sentence in notes_sentences:
             if sentence.strip():
+                # Prefix notes so we can distinguish them, but for span finding this is tricky.
+                # Notes are separate from slide.text.
+                # We will store notes chunks but they won't have spans in slide.text.
                 raw_chunks.append(f"Note: {sentence.strip()}")
 
     MAX_CHUNK_SIZE = 1000 # Characters
@@ -56,12 +62,39 @@ def chunk_slide(slide: Slide) -> List[Chunk]:
             final_chunks.append(content)
 
     chunks = []
+    
+    # Track search position to handle duplicate phrases correctly
+    search_start_index = 0
+    
     for content in final_chunks:
+        metadata: Dict[str, Any] = {"title": slide.title}
+        
+        # Try to find span in slide.text
+        # Note: This is imperfect if content was modified (e.g. bullets removed).
+        # But we stripped bullets from content, so we search for content in text.
+        
+        # If it's a note, skip span finding in slide.text
+        if content.startswith("Note: "):
+             # Could add span in notes if we wanted, but for now just skip
+             # Could add span in notes if we wanted, but for now just skip
+             # logger.debug(f"Skipping span finding for note chunk: {content[:20]}...")
+             pass
+        else:
+            start_index = text.find(content, search_start_index)
+            if start_index != -1:
+                end_index = start_index + len(content)
+                metadata["start_index"] = start_index
+                metadata["end_index"] = end_index
+                # Update search start so next search is after this one
+                # But be careful if chunks are out of order? 
+                # Our chunking order preserves text order, so this is safe.
+                search_start_index = end_index
+        
         chunks.append(Chunk(
             id=str(uuid.uuid4()),
             slide_index=slide.index,
             text=content,
-            metadata={"title": slide.title}
+            metadata=metadata
         ))
 
     return chunks

@@ -1,0 +1,112 @@
+[
+    {
+        "file": "backend/api/routers/ingestion.py",
+        "line_range": "79-95",
+        "issue": "Broken Object Level Authorization (BOLA)",
+        "severity": "critical",
+        "category": "security",
+        "evidence": "async def get_slides(session_id: str)... return [asdict(s) for s in slides]",
+        "risk_if_ignored": "Anyone with a session ID can read sensitive slide data without authentication. Public data exposure.",
+        "minimal_fix": "Add `current_user: Annotated[User, Depends(get_current_user)]` dependency and verify user owns the session.",
+        "better_fix": "Implement proper RBAC via a policy engine or middleware that checks `session.user_id == current_user.id`.",
+        "references": [
+            "OWASP API Security Top 10: API1:2019 Broken Object Level Authorization"
+        ]
+    },
+    {
+        "file": "backend/api/routers/auth.py",
+        "line_range": "26-42",
+        "issue": "Synchronous DB calls in Async Route",
+        "severity": "critical",
+        "category": "performance",
+        "evidence": "async def login_for_access_token(...): session.exec(select(User)...)",
+        "risk_if_ignored": "Blocks the asyncio event loop during DB queries, causing massive latency spikes and inability to handle concurrent requests.",
+        "minimal_fix": "Change route to `def` (sync) to let FastAPI run it in a threadpool.",
+        "better_fix": "Switch to `AsyncSession` and `await session.exec(...)` for true async DB access.",
+        "references": [
+            "FastAPI: Async SQL (Relational) Databases"
+        ]
+    },
+    {
+        "file": "backend/ingestion/router.py",
+        "line_range": "52",
+        "issue": "Blocking File I/O in Async Route",
+        "severity": "high",
+        "category": "performance",
+        "evidence": "file_path = blob_storage.save_upload(file, session_id)",
+        "risk_if_ignored": "Blocks event loop while writing large files to disk/S3. Degrades server throughput.",
+        "minimal_fix": "Wrap call in `await run_in_executor(None, blob_storage.save_upload, ...)`.",
+        "better_fix": "Refactor BlobStorage to use `aiofiles` or `aioboto3`.",
+        "references": [
+            "FastAPI: Path Operations"
+        ]
+    },
+    {
+        "file": "backend/models/db_models.py",
+        "line_range": "5-19",
+        "issue": "Missing Tenant Isolation (No Foreign Key)",
+        "severity": "high",
+        "category": "architecture",
+        "evidence": "class GameSession(SQLModel...): ... id: str ... (no user_id)",
+        "risk_if_ignored": "Impossible to enforce ownership or perform user-centric data lifecycle management. Fundamental multi-tenancy failure.",
+        "minimal_fix": "Add `user_id: Optional[int] = Field(foreign_key='users.id')` to GameSession.",
+        "better_fix": "Enforce `user_id` on all major entities and add DB constraints.",
+        "references": [
+            "Database Design: Foreign Keys"
+        ]
+    },
+    {
+        "file": "backend/config.py",
+        "line_range": "27",
+        "issue": "Insecure Default Secret Key",
+        "severity": "high",
+        "category": "security",
+        "evidence": "SECRET_KEY: str = \"your-secret-key-please-change-in-prod\"",
+        "risk_if_ignored": "If deployed without setting env var, sessions can be hijacked easily. `validate_security` only works if `is_production` is detected.",
+        "minimal_fix": "Set default to `None` or raise error if missing in all environments, or use `secrets.token_urlsafe` for dev.",
+        "better_fix": "Use a secrets manager and mandatory env vars via Pydantic validator.",
+        "references": [
+            "OWASP Top 10: Cryptographic Failures"
+        ]
+    },
+    {
+        "file": "frontend/src/App.tsx",
+        "line_range": "60",
+        "issue": "Insecure Token Storage (localStorage)",
+        "severity": "medium",
+        "category": "security",
+        "evidence": "localStorage.setItem('token', tokenData.access_token)",
+        "risk_if_ignored": "Tokens accessible to XSS attacks.",
+        "minimal_fix": "None easy (requires backend change).",
+        "better_fix": "Store token in HttpOnly SameSite cookie sent by backend.",
+        "references": [
+            "OWASP: HTML5 Security cheat sheet"
+        ]
+    },
+    {
+        "file": "backend/ingestion/parser.py",
+        "line_range": "Entire File",
+        "issue": "Use of `print` statements in production code",
+        "severity": "low",
+        "category": "observability",
+        "evidence": "print(f\"PPTX extraction failed: {e}...\")",
+        "risk_if_ignored": "Logs are unstructured and may be lost or spam stdout. Difficult to integrate with monitoring tools.",
+        "minimal_fix": "Replace `print()` with `logger.info()` / `logger.error()`.",
+        "better_fix": "Standardize logger config across app.",
+        "references": [
+            "12 Factor App: Logs"
+        ]
+    },
+    {
+        "file": "backend/ingestion/chunker.py",
+        "line_range": "81-85",
+        "issue": "Potential Type Confusion / Mypy Error",
+        "severity": "low",
+        "category": "correctness",
+        "evidence": "start_index = text.find(...) ... metadata[\"start_index\"] = start_index (Mypy error)",
+        "risk_if_ignored": "May point to subtle bug in `Chunk` metadata handling or just build noise.",
+        "minimal_fix": "Add type cast or ignore comment if verified correct.",
+        "better_fix": "Define typed class for Metadata instead of Dict[str, Any].",
+        "references": []
+    }
+]

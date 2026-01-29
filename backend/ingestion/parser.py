@@ -1,18 +1,23 @@
+"""
+Module for parsing PDF and PPTX files into slides.
+"""
 import os
-from typing import List
+from typing import List, Tuple, Dict, Any
 import pdfplumber
 from pptx import Presentation
 from backend.models.core import Slide
 
-def extract_from_file(file_path: str) -> List[Slide]:
+def extract_from_file(file_path: str) -> Tuple[List[Slide], Dict[str, Any]]:
     """
-    Extracts slides from a PDF or PPTX file.
+    Extracts slides and metadata from a PDF or PPTX file.
 
     Args:
         file_path: Path to the file.
 
     Returns:
-        List of Slide objects.
+        Tuple containing:
+        - List of Slide objects.
+        - Dictionary of deck metadata (author, created_at, etc.)
 
     Raises:
         ValueError: If the file format is not supported.
@@ -20,15 +25,15 @@ def extract_from_file(file_path: str) -> List[Slide]:
     ext = os.path.splitext(file_path)[1].lower()
 
     if ext == ".pdf":
-        slides = _extract_from_pdf(file_path)
+        slides, metadata = _extract_from_pdf(file_path)
         # Check for low text density (OCR trigger)
         total_text = sum([len(s.text) for s in slides])
         if total_text < 100 and len(slides) > 0: # Heuristic: <100 chars total for the deck?
              print("Low text density detected. Attempting OCR...")
              ocr_slides = _extract_with_ocr(file_path)
              if ocr_slides:
-                 return ocr_slides
-        return slides
+                 return ocr_slides, metadata
+        return slides, metadata
 
     if ext == ".pptx":
         try:
@@ -41,19 +46,31 @@ def extract_from_file(file_path: str) -> List[Slide]:
 
     raise ValueError(f"Unsupported file format: {ext}")
 
-def _extract_from_pdf(file_path: str) -> List[Slide]:
+def _extract_from_pdf(file_path: str) -> Tuple[List[Slide], Dict[str, Any]]:
     slides = []
+    metadata = {}
     with pdfplumber.open(file_path) as pdf:
+        metadata = pdf.metadata or {}
         for i, page in enumerate(pdf.pages):
             text = page.extract_text() or ""
             # PDF doesn't have explicit titles, so we use a generic one or first line
             title = f"Slide {i + 1}"
             slides.append(Slide(index=i, title=title, text=text))
-    return slides
+    return slides, metadata
 
-def _extract_from_pptx(file_path: str) -> List[Slide]:
+def _extract_from_pptx(file_path: str) -> Tuple[List[Slide], Dict[str, Any]]:
     slides = []
+    metadata = {}
     prs = Presentation(file_path)
+    
+    # Extract metadata
+    if prs.core_properties:
+        metadata = {
+            "author": prs.core_properties.author,
+            "created": str(prs.core_properties.created),
+            "modified": str(prs.core_properties.modified),
+            "title": prs.core_properties.title
+        }
 
     for i, slide in enumerate(prs.slides):
         title = ""
@@ -79,9 +96,9 @@ def _extract_from_pptx(file_path: str) -> List[Slide]:
 
         slides.append(Slide(index=i, title=title, text=text, notes=notes))
 
-    return slides
+    return slides, metadata
 
-def _get_shape_text(shape) -> str:
+def _get_shape_text(shape: Any) -> str:
     """
     Recursively extracts text from a shape, handling groups and tables.
     """
@@ -129,3 +146,37 @@ def _extract_with_ocr(file_path: str) -> List[Slide]:
         return []
 
     return slides
+
+def validate_ocr_dependencies():
+    """
+    Validates that system dependencies for OCR are installed.
+    Logs warnings if Tesseract or Poppler are missing.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Check Tesseract
+    try:
+        import pytesseract
+        pytesseract.get_tesseract_version()
+    except ImportError:
+        logger.warning("pytesseract not installed. OCR will not work.")
+    except Exception as e:
+        logger.warning(f"Tesseract binary not found or not working: {e}. OCR will not work. apt-get install tesseract-ocr / brew install tesseract")
+
+    # Check Poppler (via pdf2image)
+    try:
+        from pdf2image import pdfinfo_from_path
+        # We can't easily check poppler without a file, but we can check if the module is loadable
+        # and if the binary is in path. 
+        # pdf2image usually checks path on import or usage.
+        # Let's try to check visibility of pdfinfo
+        from pdf2image.exceptions import PDFInfoNotInstalledError
+        try:
+             # Basic check if tools are available
+             import subprocess
+             subprocess.run(["pdfinfo", "-v"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+             logger.warning("Poppler ('pdfinfo') not found. PDF conversion/OCR will fail. apt-get install poppler-utils / brew install poppler")
+    except ImportError:
+        logger.warning("pdf2image not installed. OCR will not work.")

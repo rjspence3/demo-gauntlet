@@ -1,0 +1,49 @@
+{
+    "hotlist": [
+        {
+            "issue": "Synchronous DB in Async Routes",
+            "evidence": "backend/api/routers/auth.py",
+            "eta_hours": 8,
+            "owner_suggested": "senior_backend",
+            "priority": 1
+        },
+        {
+            "issue": "BOLA on Slides Endpoint",
+            "evidence": "backend/api/routers/ingestion.py",
+            "eta_hours": 4,
+            "owner_suggested": "security_eng",
+            "priority": 1
+        },
+        {
+            "issue": "Missing Multi-tenancy (User-Session Link)",
+            "evidence": "backend/models/db_models.py",
+            "eta_hours": 16,
+            "owner_suggested": "architect",
+            "priority": 1
+        },
+        {
+            "issue": "Blocking File I/O",
+            "evidence": "backend/services/blob_storage.py",
+            "eta_hours": 4,
+            "owner_suggested": "backend",
+            "priority": 2
+        }
+    ],
+    "effort_breakdown": {
+        "quick_wins_hours": 8,
+        "medium_refactors_hours": 24,
+        "deep_changes_hours": 60
+    },
+    "accept_revise_reject_counts": {
+        "accept": 0,
+        "revise": 0,
+        "reject": 14
+    },
+    "target_state_checklist": [
+        "All DB usage migrated to AsyncSession",
+        "Authz middleware enforces session ownership",
+        "GameSession table has foreign key to User",
+        "Secrets loaded strictly from environment w/o defaults",
+        "File I/O offloaded to threadpool or async lib"
+    ]
+}

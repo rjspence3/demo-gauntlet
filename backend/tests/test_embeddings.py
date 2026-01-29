@@ -1,3 +1,6 @@
+"""
+Tests for embeddings.
+"""
 from typing import Any
 from unittest.mock import MagicMock, patch
 from backend.models.embeddings import EmbeddingModel

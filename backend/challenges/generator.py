@@ -1,3 +1,6 @@
+"""
+Module for generating challenges using LLMs and agents.
+"""
 from typing import List, Optional, Dict, Type
 from backend.models.core import Challenge, ChallengerPersona, ResearchDossier, Slide
 from backend.models.llm import LLMClient
@@ -10,7 +13,13 @@ from backend.logger import get_logger
 logger = get_logger(__name__)
 
 class ChallengeGenerator:
+    """
+    Orchestrates the generation of challenges for a session.
+    """
     def __init__(self, llm_client: LLMClient, deck_retriever: DeckRetriever, fact_store: FactStore) -> None:
+        """
+        Initialize the ChallengeGenerator.
+        """
         self.llm_client = llm_client
         self.deck_retriever = deck_retriever
         self.fact_store = fact_store
@@ -26,6 +35,7 @@ class ChallengeGenerator:
         }
         
     def get_agent_for_persona(self, persona: ChallengerPersona) -> ChallengerAgent:
+        """Factory method to get the appropriate agent implementation for a persona."""
         agent_class = self.agent_map.get(persona.id, BaseChallenger)
         return agent_class(persona)
 

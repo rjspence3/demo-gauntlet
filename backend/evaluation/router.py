@@ -1,3 +1,6 @@
+"""
+API router for evaluation-related endpoints.
+"""
 from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
@@ -13,6 +16,9 @@ router = APIRouter(prefix="/evaluation", tags=["evaluation"])
 engine = EvaluationEngine()
 
 class ScoreRequest(BaseModel):
+    """
+    Request model for scoring an answer.
+    """
     session_id: str
     persona_id: str
     challenge_id: str
@@ -20,11 +26,15 @@ class ScoreRequest(BaseModel):
     ideal_answer: Optional[str] = None # Optional now, we look it up
 
 class ScoreResponse(BaseModel):
+    """
+    Response model for scoring result.
+    """
     score: int
     feedback: str
 
 @router.post("/score", response_model=ScoreResponse)
 async def score_answer(request: ScoreRequest) -> ScoreResponse:
+    """Score a user's answer to a challenge."""
     try:
         store = SessionStore()
         
@@ -46,6 +56,7 @@ async def score_answer(request: ScoreRequest) -> ScoreResponse:
         store.save_interaction(request.session_id, {
             "challenge_id": request.challenge_id,
             "persona_id": request.persona_id,
+            "slide_index": challenge.slide_index if challenge else None,
             "user_answer": request.user_answer,
             "ideal_answer": ideal_answer,
             "score": result.score,
@@ -60,6 +71,7 @@ async def score_answer(request: ScoreRequest) -> ScoreResponse:
 
 @router.get("/report/{session_id}")
 async def get_report(session_id: str) -> Dict[str, Any]:
+    """Generate a report for the session."""
     store = SessionStore()
     reporting_engine = ReportingEngine(store)
     report = reporting_engine.generate_report(session_id)

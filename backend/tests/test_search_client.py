@@ -1,3 +1,6 @@
+"""
+Tests for search_client.
+"""
 from backend.research.client import MockSearchClient, SearchResult
 
 def test_mock_search_client() -> None:

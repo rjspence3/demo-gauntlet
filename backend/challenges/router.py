@@ -1,13 +1,17 @@
+"""
+API router for challenge-related endpoints.
+"""
 from typing import List, Any, Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from backend.models.core import Challenge, ChallengerPersona, ResearchDossier
 from backend.challenges.personas import ChallengerRegistry
 from backend.challenges.generator import ChallengeGenerator
-from backend.models.llm import OpenAILLM, MockLLM, LLMClient
+from backend.models.llm import OpenAIClient, MockLLM, LLMClient
 from backend.models.store import DeckRetriever
 from backend.models.fact_store import FactStore
 from backend.config import config
+from backend.limiter import limiter
 
 from backend.models.session import SessionStore
 
@@ -17,14 +21,17 @@ session_store = SessionStore()
 
 # Dependency injection
 def get_llm() -> LLMClient:
+    """Dependency provider for LLMClient."""
     if config.OPENAI_API_KEY:
-        return OpenAILLM(api_key=config.OPENAI_API_KEY)
-    return MockLLM()
+        return OpenAIClient(api_key=config.OPENAI_API_KEY)
+    raise HTTPException(status_code=500, detail="OPENAI_API_KEY is missing. Please configure it in .env")
 
 def get_deck_retriever() -> DeckRetriever:
+    """Dependency provider for DeckRetriever."""
     return DeckRetriever()
 
 def get_fact_store() -> FactStore:
+    """Dependency provider for FactStore."""
     return FactStore()
 
 def get_generator(
@@ -32,31 +39,38 @@ def get_generator(
     deck_retriever: DeckRetriever = Depends(get_deck_retriever),
     fact_store: FactStore = Depends(get_fact_store)
 ) -> ChallengeGenerator:
+    """Dependency provider for ChallengeGenerator."""
     return ChallengeGenerator(llm, deck_retriever, fact_store)
 
 class GenerateRequest(BaseModel):
+    """
+    Request model for generating challenges.
+    """
     session_id: str
     persona_id: str
 
 @router.get("/personas", response_model=List[ChallengerPersona])
-async def list_personas() -> List[ChallengerPersona]:
+@limiter.limit("20/minute")
+async def list_personas(request: Request) -> List[ChallengerPersona]:
     """List available challenger personas."""
     return registry.list_personas()
 
 @router.post("/generate", response_model=List[Challenge])
+@limiter.limit("5/minute")
 async def generate_challenges(
-    request: GenerateRequest,
+    request: Request,
+    generate_request: GenerateRequest,
     generator: ChallengeGenerator = Depends(get_generator)
 ) -> List[Challenge]:
     """Generate challenges for a specific persona (precompute)."""
-    persona = registry.get_persona(request.persona_id)
+    persona = registry.get_persona(generate_request.persona_id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
         
     # Fetch Research Dossier
-    dossier = session_store.get_dossier(request.session_id)
+    dossier = session_store.get_dossier(generate_request.session_id)
     if not dossier:
-        dossier = ResearchDossier(session_id=request.session_id)
+        dossier = ResearchDossier(session_id=generate_request.session_id)
         
     # Fetch Slides (needed for precompute)
     # Note: SessionStore needs to support retrieving slides. 
@@ -64,18 +78,15 @@ async def generate_challenges(
     # If SessionStore doesn't have get_slides, we might need to add it or fetch from somewhere else.
     # Assuming session_store has a way to get slides, or we pass them.
     # For MVP, let's assume we stored them in session_store.
-    slides = session_store.get_slides(request.session_id)
+    slides = session_store.get_slides(generate_request.session_id)
     if not slides:
-         # Try to load from file system if not in memory store? 
-         # Or just fail gracefully.
-         # For MVP, let's assume they are there if ingestion happened.
-         pass
+        raise HTTPException(status_code=404, detail="Slides not found for session. Please ensure deck ingestion is complete.")
 
     # Fetch Deck Context
-    deck_context = session_store.get_deck_summary(request.session_id) or "No context available."
+    deck_context = session_store.get_deck_summary(generate_request.session_id) or "No context available."
     
     challenges = generator.generate_challenges(
-        session_id=request.session_id,
+        session_id=generate_request.session_id,
         persona=persona,
         deck_context=deck_context,
         dossier=dossier,
@@ -83,12 +94,13 @@ async def generate_challenges(
     )
     
     # Save challenges
-    session_store.save_challenges(request.session_id, challenges)
+    session_store.save_challenges(generate_request.session_id, challenges)
     
     return challenges
 
 @router.get("/session/{session_id}", response_model=List[Challenge])
-async def get_challenges(session_id: str) -> List[Challenge]:
+@limiter.limit("30/minute")
+async def get_challenges(request: Request, session_id: str) -> List[Challenge]:
     """Retrieve all challenges for a session."""
     challenges = session_store.get_challenges(session_id)
     return challenges

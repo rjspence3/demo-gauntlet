@@ -1,8 +1,20 @@
+"""
+Module for generating text embeddings.
+"""
 from typing import List, Union
 from sentence_transformers import SentenceTransformer
 
 class EmbeddingModel:
+    """
+    Wrapper around SentenceTransformer for generating embeddings.
+    """
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        """
+        Initialize the EmbeddingModel.
+
+        Args:
+            model_name: Name of the sentence-transformers model to use.
+        """
         self.model = SentenceTransformer(model_name)
 
     def encode(self, texts: Union[str, List[str]]) -> List[List[float]]:

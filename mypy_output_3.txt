@@ -1,0 +1,21 @@
+backend/research/client.py:46: error: Library stubs not installed for "requests"  [import-untyped]
+backend/research/client.py:46: note: Hint: "python3 -m pip install types-requests"
+backend/research/client.py:46: note: (or run "mypy --install-types" to install all missing stub packages)
+backend/research/client.py:46: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+backend/challenges/store.py:9: error: Call to untyped function "_ensure_data_file" in typed context  [no-untyped-call]
+backend/challenges/store.py:11: error: Function is missing a return type annotation  [no-untyped-def]
+backend/challenges/store.py:11: note: Use "-> None" if function does not return a value
+backend/challenges/store.py:38: error: Missing type parameters for generic type "Dict"  [type-arg]
+backend/challenges/store.py:51: error: Function is missing a return type annotation  [no-untyped-def]
+backend/evaluation/reporting.py:91: error: Need type annotation for "agg_breakdown"  [var-annotated]
+backend/ingestion/parser.py:98: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+backend/evaluation/engine.py:9: error: Missing type parameters for generic type "dict"  [type-arg]
+backend/models/store.py:102: error: Need type annotation for "chunks" (hint: "chunks: list[<type>] = ...")  [var-annotated]
+backend/models/fact_store.py:65: error: Unused "type: ignore" comment  [unused-ignore]
+backend/models/fact_store.py:68: error: Need type annotation for "facts" (hint: "facts: list[<type>] = ...")  [var-annotated]
+backend/tests/test_challenger_store.py:8: error: Function is missing a type annotation  [no-untyped-def]
+backend/tests/test_challenger_store.py:14: error: Function is missing a type annotation  [no-untyped-def]
+backend/tests/test_challenger_store.py:38: error: Item "None" of "ChallengerPersona | None" has no attribute "name"  [union-attr]
+backend/tests/test_precompute_flow.py:5: error: Function is missing a return type annotation  [no-untyped-def]
+backend/tests/test_precompute_flow.py:5: note: Use "-> None" if function does not return a value
+Found 15 errors in 9 files (checked 65 source files)

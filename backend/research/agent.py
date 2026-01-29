@@ -1,4 +1,7 @@
-from typing import List, Optional
+"""
+Agent for conducting research on deck topics.
+"""
+from typing import List, Optional, Any
 from backend.models.core import ResearchDossier
 from backend.models.llm import LLMClient, MockLLM
 from backend.models.fact_store import FactStore
@@ -11,14 +14,25 @@ from backend.logger import get_logger
 logger = get_logger(__name__)
 
 class ResearchAgent:
+    """
+    Orchestrates the research process: query generation, search, summarization, and fact storage.
+    """
     def __init__(self, llm_client: Optional[LLMClient] = None,
                  search_client: Optional[SearchClient] = None,
                  fact_store: Optional[FactStore] = None):
+        """
+        Initialize the ResearchAgent.
+
+        Args:
+            llm_client: Client for LLM operations.
+            search_client: Client for web search.
+            fact_store: Store for saving researched facts.
+        """
         self.llm_client = llm_client or MockLLM()
         self.search_client = search_client or MockSearchClient()
         self.fact_store = fact_store or FactStore()
 
-    def run(self, session_id: str, deck_title: str, tags: List[str]) -> ResearchDossier:
+    def run(self, session_id: str, deck_title: str, tags: list[str], slides: Optional[list[Any]] = None) -> ResearchDossier:
         """
         Executes the full research workflow:
         1. Generate queries (LLM)
@@ -39,7 +53,7 @@ class ResearchAgent:
         try:
             logger.info("Starting research...")
             # 1. Generate Queries
-            queries = generate_queries(deck_title, tags, self.llm_client)
+            queries = generate_queries(deck_title, tags, self.llm_client, slides)
             logger.info(f"Generated queries: {queries}")
             
             # 2. Execute Search (aggregate results)

@@ -1,0 +1,42 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+  name: demo-gauntlet-backend
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      containers:
+      - env:
+        - name: REDIS_HOST
+          value: localhost
+        - name: PROJECT_NAME
+          value: Demo Gauntlet
+        - name: OPENAI_API_KEY
+          value: OPENAI_KEY_REDACTED
+        - name: BRAVE_API_KEY
+          value: BRAVE_KEY_REDACTED
+        - name: BETA_INVITE_CODE
+          value: INVITE_CODE_REDACTED
+        image: gcr.io/substack-digest-05449/demo-gauntlet-backend@sha256:97656fad1e3870b2586eb0b6807dee9a0beadc9a4280bd3238ddf1782cd8752b
+        name: backend
+        ports:
+        - containerPort: 8000
+      - image: redis:7-alpine
+        name: redis
+      - command:
+        - arq
+        - backend.worker.WorkerSettings
+        env:
+        - name: REDIS_HOST
+          value: localhost
+        - name: OPENAI_API_KEY
+          value: OPENAI_KEY_REDACTED
+        - name: BRAVE_API_KEY
+          value: BRAVE_KEY_REDACTED
+        image: gcr.io/substack-digest-05449/demo-gauntlet-backend:latest
+        name: worker

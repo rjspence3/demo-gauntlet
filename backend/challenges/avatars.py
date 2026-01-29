@@ -1,17 +1,32 @@
+"""
+Module for generating challenger avatars.
+"""
 import os
 import random
-from typing import Dict
+from typing import Dict, Protocol, Optional
+
+class ImageProvider(Protocol):
+    """Protocol for image generation providers."""
+    def generate_image(self, prompt: str) -> str:
+        """Generate an image from a prompt."""
+        ...
+
+class MockImageProvider:
+    """Mock image provider for testing."""
+    def generate_image(self, prompt: str) -> str:
+        """Return a mock image path."""
+        return "/avatars/default.png"
 
 class AvatarGenerator:
     """
     Generates avatars for challenger personas.
-    For MVP, this uses a mock implementation that selects from pre-defined assets
-    or generates placeholders. In a real system, this would call an image gen API.
     """
-    def __init__(self, assets_dir: str = "frontend/public/avatars"):
+    def __init__(self, assets_dir: str = "frontend/public/avatars", provider: Optional[ImageProvider] = None):
+        """
+        Initialize the AvatarGenerator.
+        """
         self.assets_dir = assets_dir
-        # Ensure directory exists
-        # os.makedirs(self.assets_dir, exist_ok=True) # Frontend might manage this
+        self.provider = provider or MockImageProvider()
 
     def generate_avatar_set(self, persona_id: str, style: str) -> Dict[str, str]:
         """
@@ -20,9 +35,6 @@ class AvatarGenerator:
         """
         states = ["neutral", "skeptical", "impressed", "thoughtful"]
         avatars = {}
-        
-        # Mock implementation: Return placeholder URLs
-        # In reality, we might check if files exist or call DALL-E
         
         base_url = "/avatars" # Relative to frontend public dir
         
@@ -43,5 +55,4 @@ class AvatarGenerator:
         """
         Generates a single avatar image from a prompt.
         """
-        # Mock: return a placeholder
-        return "/avatars/default.png"
+        return self.provider.generate_image(prompt)

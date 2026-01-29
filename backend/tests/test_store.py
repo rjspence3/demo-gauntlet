@@ -1,3 +1,6 @@
+"""
+Tests for store.
+"""
 from typing import Any
 from unittest.mock import MagicMock, patch
 from backend.models.store import VectorStore
@@ -53,7 +56,7 @@ def test_query_similar(mock_emb_cls: Any, mock_client_cls: Any) -> None:
     mock_client_cls.return_value = mock_client_instance
 
     store = VectorStore()
-    results = store.query_similar("query", n=1)
+    results = store.get_nearest_chunks("query", k=1)
 
     assert len(results) == 1
     assert results[0].id == "1"

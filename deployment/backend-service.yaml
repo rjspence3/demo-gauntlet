@@ -1,0 +1,33 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: demo-gauntlet-backend
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      containers:
+      - name: backend
+        image: gcr.io/substack-digest-05449/demo-gauntlet-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: REDIS_HOST
+          value: "localhost"
+        - name: PROJECT_NAME
+          value: "Demo Gauntlet"
+        # Add other env vars as needed, e.g. OPENAI_API_KEY
+        # For a real deployment, use Secret Manager
+      - name: redis
+        image: redis:7-alpine
+      - name: worker
+        image: gcr.io/substack-digest-05449/demo-gauntlet-backend:latest
+        command: ["arq", "backend.worker.WorkerSettings"]
+        env:
+        - name: REDIS_HOST
+          value: "localhost"
+        # Worker needs same env vars as backend for processing

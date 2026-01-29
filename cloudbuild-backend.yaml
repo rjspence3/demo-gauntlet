@@ -1,0 +1,5 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/substack-digest-05449/demo-gauntlet-backend', '-f', 'backend/Dockerfile', '.']
+images:
+  - 'gcr.io/substack-digest-05449/demo-gauntlet-backend'

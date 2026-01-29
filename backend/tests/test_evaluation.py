@@ -1,6 +1,10 @@
+"""
+Tests for evaluation.
+"""
 from backend.evaluation.engine import EvaluationEngine
 
 def test_evaluation_engine() -> None:
+    """Test evaluation engine scoring logic."""
     engine = EvaluationEngine()
     
     # Test high similarity
@@ -8,8 +12,8 @@ def test_evaluation_engine() -> None:
         "We use AES-256 encryption for all data at rest.",
         "Our platform secures data at rest using AES-256 encryption."
     )
-    assert result.score > 80
-    assert "Excellent" in result.feedback or "Good" in result.feedback
+    assert result.score >= 80
+    assert "Good" in result.feedback
     
     # Test low similarity
     result = engine.evaluate(

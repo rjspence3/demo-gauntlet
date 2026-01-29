@@ -1,3 +1,6 @@
+"""
+Tests for reporting_api.
+"""
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from backend.main import app
@@ -25,7 +28,8 @@ def test_get_report(mock_engine_cls: MagicMock, mock_store_cls: MagicMock) -> No
         persona_breakdown=[],
         total_challenges=5,
         strengths=["S1"],
-        weaknesses=["W1"]
+        weaknesses=["W1"],
+        slide_breakdown={}
     )
     
     response = client.get("/evaluation/report/s1")

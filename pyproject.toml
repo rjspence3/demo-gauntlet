@@ -18,7 +18,17 @@ dependencies = [
     "python-multipart",
     "openai",
     "pdf2image",
-    "pytesseract"
+    "pytesseract",
+    "sqlmodel",
+    "alembic",
+    "psycopg2-binary",
+    "boto3",
+    "python-jose[cryptography]",
+    "passlib[bcrypt]",
+    "arq",
+    "redis",
+    "python-json-logger",
+    "python-multipart"
 ]
 requires-python = ">=3.9"
 
@@ -31,7 +41,19 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["backend"]
+packages = [
+    "backend",
+    "backend.api",
+    "backend.challenges",
+    "backend.evaluation",
+    "backend.ingestion",
+    "backend.migrations",
+    "backend.models",
+    "backend.research",
+    "backend.services",
+    "backend.session",
+    "backend.tests"
+]
 
 [tool.mypy]
 python_version = "3.11"

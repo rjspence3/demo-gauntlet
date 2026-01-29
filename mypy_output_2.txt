@@ -1,0 +1,31 @@
+backend/research/client.py:46: error: Library stubs not installed for "requests"  [import-untyped]
+backend/research/client.py:46: note: Hint: "python3 -m pip install types-requests"
+backend/research/client.py:46: note: (or run "mypy --install-types" to install all missing stub packages)
+backend/research/client.py:46: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+backend/challenges/store.py:9: error: Call to untyped function "_ensure_data_file" in typed context  [no-untyped-call]
+backend/challenges/store.py:11: error: Function is missing a return type annotation  [no-untyped-def]
+backend/challenges/store.py:11: note: Use "-> None" if function does not return a value
+backend/challenges/store.py:38: error: Missing type parameters for generic type "Dict"  [type-arg]
+backend/challenges/store.py:51: error: Function is missing a return type annotation  [no-untyped-def]
+backend/evaluation/reporting.py:91: error: Need type annotation for "agg_breakdown"  [var-annotated]
+backend/api/routers/challengers.py:38: error: Function is missing a return type annotation  [no-untyped-def]
+backend/api/routers/challengers.py:38: error: Missing type parameters for generic type "dict"  [type-arg]
+backend/api/routers/challengers.py:39: error: Name "store" is not defined  [name-defined]
+backend/research/query_builder.py:40: error: Name "llm_client" is not defined  [name-defined]
+backend/tests/test_query_builder.py:2: error: Module "backend.research.query_builder" has no attribute "generate_queries"  [attr-defined]
+backend/ingestion/parser.py:98: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+backend/evaluation/engine.py:9: error: Missing type parameters for generic type "dict"  [type-arg]
+backend/models/store.py:12: error: Incompatible default for argument "session_id" (default has type "None", argument has type "str")  [assignment]
+backend/models/store.py:12: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+backend/models/store.py:12: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+backend/models/store.py:88: error: Need type annotation for "chunks" (hint: "chunks: list[<type>] = ...")  [var-annotated]
+backend/models/fact_store.py:65: error: Unused "type: ignore" comment  [unused-ignore]
+backend/models/fact_store.py:68: error: Need type annotation for "facts" (hint: "facts: list[<type>] = ...")  [var-annotated]
+backend/research/agent.py:6: error: Module "backend.research.query_builder" has no attribute "generate_queries"  [attr-defined]
+backend/challenges/implementations.py:52: error: "DeckRetriever" has no attribute "get_chunks_for_slide"  [attr-defined]
+backend/tests/test_challenger_store.py:8: error: Function is missing a type annotation  [no-untyped-def]
+backend/tests/test_challenger_store.py:14: error: Function is missing a type annotation  [no-untyped-def]
+backend/tests/test_challenger_store.py:38: error: Item "None" of "ChallengerPersona | None" has no attribute "name"  [union-attr]
+backend/tests/test_precompute_flow.py:5: error: Function is missing a return type annotation  [no-untyped-def]
+backend/tests/test_precompute_flow.py:5: note: Use "-> None" if function does not return a value
+Found 23 errors in 14 files (checked 65 source files)

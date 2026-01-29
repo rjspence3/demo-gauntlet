@@ -1,3 +1,6 @@
+"""
+Tests for upload_flow.
+"""
 from typing import Any
 import os
 import shutil
@@ -7,19 +10,22 @@ from backend.main import app
 
 client = TestClient(app)
 
-@patch("backend.ingestion.router.store")
-@patch("backend.ingestion.router.extract_from_file")
-def test_upload_deck(mock_extract: Any, mock_store: Any) -> None:
+@patch("backend.services.blob_storage.get_blob_storage")
+def test_upload_deck(mock_get_blob: Any) -> None:
     """Test the upload deck endpoint."""
-    # Mock extraction
-    mock_slide = MagicMock()
-    mock_slide.index = 0
-    mock_slide.title = "Test Slide"
-    mock_slide.text = "Test content."
-    mock_slide.notes = ""
-    mock_slide.tags = []
+    # Mock Blob Storage
+    mock_blob = MagicMock()
+    mock_blob.save_upload.return_value = "test_deck.pdf"
+    mock_get_blob.return_value = mock_blob
 
-    mock_extract.return_value = [mock_slide]
+    # Mock Arq Pool
+    mock_pool = MagicMock()
+    mock_pool.enqueue_job = MagicMock()
+    # Make it awaitable
+    async def async_enqueue(*args, **kwargs):
+        return
+    mock_pool.enqueue_job.side_effect = async_enqueue
+    app.state.arq_pool = mock_pool
 
     # Create a dummy file
     filename = "test_deck.pdf"
@@ -36,12 +42,12 @@ def test_upload_deck(mock_extract: Any, mock_store: Any) -> None:
         assert response.status_code == 200
         data = response.json()
         assert data["filename"] == filename
-        assert data["slide_count"] == 1
+        assert data["status"] == "processing"
         assert "session_id" in data
 
-        # Verify store called
-        mock_store.add_chunks.assert_called_once()
-
+        # Verify enqueue called
+        mock_pool.enqueue_job.assert_called_once()
+        
     finally:
         if os.path.exists(filename):
             os.remove(filename)

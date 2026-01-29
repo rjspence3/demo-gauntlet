@@ -1,3 +1,6 @@
+"""
+Tests for session.
+"""
 import os
 import shutil
 from backend.models.session import SessionStore
@@ -5,11 +8,9 @@ from backend.models.core import ResearchDossier
 
 def test_session_store() -> None:
     """Test saving and loading session data."""
-    test_dir = "./data/test_sessions"
-    if os.path.exists(test_dir):
-        shutil.rmtree(test_dir)
+    # test_dir cleanup removed as SessionStore uses DB
         
-    store = SessionStore(base_path=test_dir)
+    store = SessionStore()
     session_id = "test_session"
     
     # Test Dossier
@@ -27,4 +28,4 @@ def test_session_store() -> None:
     assert summary == "Summary"
     
     # Cleanup
-    shutil.rmtree(test_dir)
+    # Cleanup handled by in-memory DB teardown

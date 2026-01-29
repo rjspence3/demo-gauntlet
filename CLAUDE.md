@@ -1,20 +1,21 @@
+<!-- AUTO-GENERATED from ports.json — do not edit manually -->
+<!-- Regenerate: python3 ~/Development/generate_claude_md.py --apply -->
+
 # Demo Gauntlet
 
-Demo Gauntlet MVP - document processing and challenge evaluation platform.
+FastAPI + Python project.
 
 ---
 
 ## Environment Setup
 
 ```bash
-# Activate virtual environment (REQUIRED before any Python commands)
+# Activate virtual environment (REQUIRED)
 source .venv/bin/activate
 
-# Install dependencies (if needed)
+# Install dependencies
 pip install -e .
-
-# Install dev dependencies
-pip install -e ".[dev]"
+pip install -e ".[dev]"  # includes test dependencies
 ```
 
 ---
@@ -23,85 +24,91 @@ pip install -e ".[dev]"
 
 | Service | Domain | Port |
 |---------|--------|------|
-| Frontend (Vite) | http://demo-gauntlet.test | 3103 |
-| Backend API | http://demo-gauntlet-api.test | 5003 |
+| Api | http://demo-gauntlet-api.test | 5003 |
+| Frontend | http://demo-gauntlet.test | 3103 |
 
-Port assignments are defined in `~/Development/dev/ports.json` (authoritative).
+Port assignments defined in `~/Development/dev/ports.json`.
 
 ---
 
 ## Commands
 
 ```bash
-# Start backend API
+# Start API
 uvicorn backend.main:app --host 127.0.0.1 --reload --port 5003
 
-# Start frontend (from frontend/ directory)
-cd frontend && npm run dev -- --port 3103 --strictPort
+# Start frontend
+npm run dev -- --port 3103 --strictPort
 
 # Run tests
 pytest
 
 # Type checking
-mypy backend/
-
-# Linting
-pylint backend/
+mypy .
 ```
 
 ---
 
-## Project Structure
+## Structure
 
 ```
 backend/
-  main.py              # FastAPI entrypoint
-  api/                 # API routes
-  challenges/          # Challenge logic
-  evaluation/          # Evaluation engine
-  ingestion/           # Document ingestion
-  models/              # Data models
-  services/            # Business logic
-  session/             # Session management
-  migrations/          # Alembic migrations
-frontend/              # Vite frontend
-data/                  # Data files
-deployment/            # Deployment configs
+  api/
+    routers/
+  challenges/
+  dspy_optimization/
+  evaluation/
+  ingestion/
+  migrations/
+    versions/
+  models/
+  research/
+  services/
+  session/
+  tests/
+data/
+  avatars/
+  chroma_db/
+  chroma_db_backup/
+    9e05be18-0cf2-41e0-8c03-9b53ca1ce7c9/
+    cd53b6d2-c123-44ef-ac77-f3ab50b97ed3/
+  sessions/
+    2a2f0c4f-6d65-42be-b9ab-3214852dda6c/
+    4c08c7f4-b8f4-4807-ba23-bf5da3d03f7e/
+    54ede032-1f13-4c29-9cde-74c91390b231/
+    5abc8fc7-0b8d-42f0-a5ef-81855df66a14/
+    6e1087a1-9116-4e19-b124-70feeafb11e1/
+    70ae0a2e-96b4-4fa0-9223-33122752a800/
+    8703b17c-950e-4cdd-af11-bbb9a26b0f2b/
+    894badfd-369a-4f8f-89ca-310c941a9a56/
+    b025e650-7794-4fe1-ae36-6b07dae5264f/
+    s1/
+    test-session/
+demo_gauntlet.egg-info/
+deployment/
+dev/
+doc/
+docs/
+  plan/
+frontend/
+  public/
+    assets/
+  src/
+    api/
+    assets/
+    components/
+    lib/
+scripts/
 ```
-
----
-
-## Notes
-
-- Package name: `demo-gauntlet`
-- Requires Python >= 3.9
-- Uses sentence-transformers + ChromaDB for embeddings
-- PostgreSQL via SQLModel + Alembic
-- Redis + ARQ for background jobs
-- S3 (boto3) for file storage
 
 ---
 
 ## Isolation Settings
 
-This project is configured to run alongside other local dev projects without conflicts.
+| Resource | Setting |
+|----------|---------|
+| Redis port | 6381 |
+| Redis prefix | `dg:` |
+## Notes
 
-| Resource | Setting | Notes |
-|----------|---------|-------|
-| Redis key prefix | `dg:` | ARQ queue name prefixed to avoid collisions |
-| Docker Redis port | 6381 | Host port mapped to container 6379 |
-| API port | 5003 | Unique per `ports.json` |
-| Frontend port | 3103 | Unique per `ports.json` |
-
-### Docker Commands
-
-```bash
-# Start all services
-docker compose up -d
-
-# Start only Redis
-docker compose up -d redis
-
-# View logs
-docker compose logs -f backend
-```
+- Tech: FastAPI, Python
