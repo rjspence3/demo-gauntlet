@@ -60,7 +60,8 @@ async def score_answer(request: ScoreRequest) -> ScoreResponse:
             "user_answer": request.user_answer,
             "ideal_answer": ideal_answer,
             "score": result.score,
-            "feedback": result.feedback
+            "feedback": result.feedback,
+            "breakdown": result.breakdown,
         })
         
         return ScoreResponse(score=result.score, feedback=result.feedback)

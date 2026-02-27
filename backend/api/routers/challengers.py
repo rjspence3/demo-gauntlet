@@ -7,22 +7,11 @@ from backend.models.core import ChallengerPersona
 from backend.challenges.store import ChallengerStore
 from backend.limiter import limiter
 
-# Assuming get_challenger_store is defined elsewhere or needs to be added
-# For the purpose of making the provided snippet syntactically correct,
-# we'll add a placeholder for get_challenger_store and get_db if they are new.
-# If these functions already exist, this placeholder should be removed.
 def get_challenger_store() -> ChallengerStore:
     """Dependency provider for ChallengerStore."""
     return ChallengerStore()
 
-def get_db() -> Any:
-    """Placeholder for database dependency."""
-    pass
-
 router = APIRouter(prefix="/challengers", tags=["challengers"])
-# The original 'store = ChallengerStore()' is likely replaced by dependency injection.
-# Keeping it commented out for context, but the new structure implies it's not directly used globally.
-# store = ChallengerStore()
 
 @router.get("/", response_model=List[ChallengerPersona])
 @limiter.limit("20/minute")

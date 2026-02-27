@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Mic, MicOff, AlertCircle } from 'lucide-react';
-import { Button } from './ui/button'; // Assuming Shadcn or similar, or fallback to native
 import { liveClient } from '../api/live';
 
 interface AudioCaptureProps {

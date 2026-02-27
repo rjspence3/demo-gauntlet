@@ -7,7 +7,7 @@ import { LiveSessionMode } from './components/LiveSessionMode';
 import { DemoRoom } from './components/DemoRoom';
 import { SummaryView } from './components/SummaryView';
 import { AuthView } from './components/AuthView';
-import { setAuthToken, uploadDeck, getSessionStatus, listPersonas, precomputeChallenges } from './api/client';
+import { setAuthToken, uploadDeck, getSessionStatus, generateResearch, listPersonas, precomputeChallenges } from './api/client';
 import { Swords, BarChart, Zap, Users, LogOut } from 'lucide-react';
 import { cn } from './lib/utils';
 import { DGLayoutShell, DGIconButton } from './components/ui';
@@ -39,13 +39,9 @@ function App() {
             const fetchPersonas = async () => {
                 try {
                     const personas = await listPersonas();
-                    // Map API Persona to UI Challenger type if needed, but they are likely compatible
-                    // UI Challenger has 'evidenceCount', API doesn't. We can mock that or ignore it.
-                    // Let's add a placeholder evidenceCount
                     const uiPersonas = personas.map(p => ({
                         ...p,
-                        description: p.style, // Map style to description 
-                        evidenceCount: Math.floor(Math.random() * 10) + 5 // Placeholder for visual flair
+                        description: p.style,
                     }));
                     setChallengers(uiPersonas);
                 } catch (err) {
@@ -58,35 +54,46 @@ function App() {
 
     // Processing Logic
     useEffect(() => {
-        if (view === 'research' && sessionId) {
-            setProcessingStep('uploading'); // Initial state
+        if (view !== 'research' || !sessionId) return;
 
-            const pollInterval = setInterval(async () => {
+        setProcessingStep('uploading');
+        let stopped = false;
+
+        const run = async () => {
+            // Step 1: Poll until ingestion is complete
+            while (!stopped) {
+                await new Promise(r => setTimeout(r, 2000));
+                if (stopped) return;
                 try {
                     const statusRes = await getSessionStatus(sessionId);
-
-                    if (statusRes.status === 'completed') {
-                        setProcessingStep('complete');
-                        clearInterval(pollInterval);
-                        setTimeout(() => setView('selection'), 1000); // Small delay for UX
-                    } else if (statusRes.status === 'failed') {
-                        setProcessingStep('error' as any); // Add error state?
-                        clearInterval(pollInterval);
+                    if (statusRes.status === 'completed') break;
+                    if (statusRes.status === 'failed') {
                         alert("Processing failed. Please try again.");
                         setView('upload');
-                    } else {
-                        // processing
-                        // We can simulate sub-steps or just show a generic "Processing" 
-                        // The UI expects specific steps. Let's cycle them or just pick 'researching'
-                        setProcessingStep('researching');
+                        return;
                     }
                 } catch (e) {
                     console.error("Polling error", e);
                 }
-            }, 2000);
+            }
+            if (stopped) return;
 
-            return () => clearInterval(pollInterval);
-        }
+            // Step 2: Run research generation (visible step)
+            setProcessingStep('researching');
+            try {
+                await generateResearch(sessionId);
+            } catch (err) {
+                console.warn("Research generation failed, continuing without dossier:", err);
+            }
+            if (stopped) return;
+
+            // Step 3: Done
+            setProcessingStep('complete');
+            setTimeout(() => setView('selection'), 1000);
+        };
+
+        run();
+        return () => { stopped = true; };
     }, [view, sessionId]);
 
     const handleLoginSuccess = () => {

@@ -24,11 +24,15 @@ class LiveClient {
     private maxReconnectAttempts = 5;
 
     constructor() {
-        // Assume backend is on same host port 8000 for dev, or infer from window
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.hostname;
-        const port = '8000';
-        this.url = `${protocol}//${host}:${port}/live/ws`;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
+        if (apiUrl) {
+            // Derive WebSocket URL from the API base URL (same host, same proxy)
+            this.url = apiUrl.replace(/^https?:/, wsProtocol) + '/live/ws';
+        } else {
+            // Same host, let Vite/Caddy proxy handle it
+            this.url = `${wsProtocol}//${window.location.host}/live/ws`;
+        }
     }
 
     connect() {

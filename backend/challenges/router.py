@@ -1,6 +1,7 @@
 """
 API router for challenge-related endpoints.
 """
+import asyncio
 from typing import List, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
@@ -85,7 +86,8 @@ async def generate_challenges(
     # Fetch Deck Context
     deck_context = session_store.get_deck_summary(generate_request.session_id) or "No context available."
     
-    challenges = generator.generate_challenges(
+    challenges = await asyncio.to_thread(
+        generator.generate_challenges,
         session_id=generate_request.session_id,
         persona=persona,
         deck_context=deck_context,

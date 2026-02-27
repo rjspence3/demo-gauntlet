@@ -80,3 +80,5 @@ app.include_router(auth_router.router)
 app.include_router(health_router.router)
 from backend.api.routers import live as live_router
 app.include_router(live_router.router)
+from backend.probes import router as probes_router
+app.include_router(probes_router.router)

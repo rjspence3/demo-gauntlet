@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class AgentState:
     persona_id: str
     status: str = "listening"  # listening, thinking, raising_hand, speaking
-    message: Optional[str] = None # The question/objection if raising hand
+    message: Optional[str] = None
 
 @dataclass
 class SessionState:
@@ -22,66 +22,98 @@ class SessionState:
 
 class LiveSessionManager:
     def __init__(self) -> None:
-        self.active_connections: List[WebSocket] = []
-        self.state: SessionState = SessionState(id="default") # Single session for now
-        self.personas: Dict[str, ChallengerPersona] = {}
+        # Per-session connection lists, states, and personas
+        self.connections: Dict[str, List[WebSocket]] = {}
+        self.sessions: Dict[str, SessionState] = {}
+        self.personas: Dict[str, Dict[str, ChallengerPersona]] = {}
 
-    async def connect(self, websocket: WebSocket) -> None:
-        await websocket.accept()
-        self.active_connections.append(websocket)
-        logger.info(f"Client connected. Total: {len(self.active_connections)}")
-        # Send initial state
-        await self.broadcast_state()
+    def register_connection(self, websocket: WebSocket, session_id: str) -> None:
+        """Register an accepted WebSocket connection under a session."""
+        if session_id not in self.connections:
+            self.connections[session_id] = []
+        self.connections[session_id].append(websocket)
+        if session_id not in self.sessions:
+            self.sessions[session_id] = SessionState(id=session_id)
+        logger.info(f"Client registered for session {session_id}. Total: {len(self.connections[session_id])}")
 
-    def disconnect(self, websocket: WebSocket) -> None:
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-            logger.info(f"Client disconnected. Total: {len(self.active_connections)}")
+    def disconnect(self, websocket: WebSocket, session_id: str) -> None:
+        if session_id in self.connections:
+            if websocket in self.connections[session_id]:
+                self.connections[session_id].remove(websocket)
+            if not self.connections[session_id]:
+                # No more clients for this session — clean up state
+                del self.connections[session_id]
+                self.sessions.pop(session_id, None)
+                self.personas.pop(session_id, None)
+        logger.info(f"Client disconnected from session {session_id}")
 
-    def set_personas(self, personas: List[ChallengerPersona]) -> None:
-        """Initialize agents for the session."""
-        self.personas = {p.id: p for p in personas}
-        self.state.agent_states = {
-            p.id: AgentState(persona_id=p.id) for p in personas
-        }
-        logger.info(f"Initialized {len(personas)} personas for live session.")
+    def set_personas(self, session_id: str, personas: List[ChallengerPersona]) -> None:
+        """Initialize agent states for the session."""
+        self.personas[session_id] = {p.id: p for p in personas}
+        session = self.sessions.get(session_id)
+        if not session:
+            session = SessionState(id=session_id)
+            self.sessions[session_id] = session
+        session.agent_states = {p.id: AgentState(persona_id=p.id) for p in personas}
+        logger.info(f"Initialized {len(personas)} personas for session {session_id}")
 
-    async def add_transcript_chunk(self, text: str) -> None:
-        """Append new text to transcript."""
+    def get_personas(self, session_id: str) -> Dict[str, ChallengerPersona]:
+        return self.personas.get(session_id, {})
+
+    def get_state(self, session_id: str) -> Optional[SessionState]:
+        return self.sessions.get(session_id)
+
+    async def add_transcript_chunk(self, session_id: str, text: str) -> None:
+        """Append new text to the session transcript."""
         if not text.strip():
             return
-        self.state.transcript.append(text)
-        # In a real app, we might trim history to avoid memory bloat
-        
-        # Broadcast update (optional, might be too noisy to send every chunk if not displaying it)
-        # await self.broadcast_state()
+        session = self.sessions.get(session_id)
+        if not session:
+            session = SessionState(id=session_id)
+            self.sessions[session_id] = session
+        session.transcript.append(text)
 
-    async def update_agent_state(self, persona_id: str, status: str, message: Optional[str] = None) -> None:
-        if persona_id in self.state.agent_states:
-            self.state.agent_states[persona_id].status = status
-            self.state.agent_states[persona_id].message = message
-            await self.broadcast_state()
+    async def update_agent_state(
+        self,
+        session_id: str,
+        persona_id: str,
+        status: str,
+        message: Optional[str] = None
+    ) -> None:
+        session = self.sessions.get(session_id)
+        if session and persona_id in session.agent_states:
+            session.agent_states[persona_id].status = status
+            session.agent_states[persona_id].message = message
+            await self.broadcast_state(session_id)
 
-    async def broadcast_state(self) -> None:
-        """Send current state to all clients."""
-        if not self.active_connections:
+    async def broadcast_state(self, session_id: str) -> None:
+        """Send current state to all clients in the session."""
+        connections = self.connections.get(session_id, [])
+        if not connections:
+            return
+        session = self.sessions.get(session_id)
+        if not session:
             return
 
         state_payload = {
             "type": "state_update",
             "data": {
-                "transcript_length": len(self.state.transcript),
-                "agents": [asdict(s) for s in self.state.agent_states.values()]
+                "transcript_length": len(session.transcript),
+                "agents": [asdict(s) for s in session.agent_states.values()]
             }
         }
-        
         message = json.dumps(state_payload)
-        for connection in self.active_connections:
+
+        stale: List[WebSocket] = []
+        for connection in connections:
             try:
                 await connection.send_text(message)
             except Exception as e:
-                logger.error(f"Error broadcasting to client: {e}")
-                # Potentially remove stale connection?
-                
-# Global instance for now (simplification)
+                logger.error(f"Error broadcasting to client in session {session_id}: {e}")
+                stale.append(connection)
+
+        for conn in stale:
+            self.disconnect(conn, session_id)
+
+# Global instance
 session_manager = LiveSessionManager()

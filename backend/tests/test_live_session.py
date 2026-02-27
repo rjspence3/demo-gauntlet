@@ -3,28 +3,27 @@ import json
 from fastapi.testclient import TestClient
 from backend.main import app
 from backend.orchestrator.session import session_manager
-from backend.orchestrator.loop import orchestrator
+from backend.api.routers.live import orchestrator
 from unittest.mock import AsyncMock, patch
 
 client = TestClient(app)
 
-@pytest.mark.asyncio
-async def test_websocket_connection_and_flow():
+def test_websocket_connection_and_flow():
     # Patch the orchestrator's LLM to force an interjection decision
     with patch.object(orchestrator.llm, 'complete_structured') as mock_llm:
         # 1. Connect WS
         with client.websocket_connect("/live/ws") as websocket:
-            # Check initial state
+            # 2. Init Session — state broadcast happens after init, not on raw connect
+            websocket.send_json({
+                "type": "init_session",
+                "session_id": "test-session-live",
+                "persona_ids": ["skeptic"]
+            })
+
+            # Receive state broadcast triggered by init_session
             data = websocket.receive_json()
             assert data["type"] == "state_update"
             assert data["data"]["transcript_length"] == 0
-            
-            # 2. Init Session
-            # We need valid persona IDs. Skeptic is usually default.
-            websocket.send_json({
-                "type": "init_session",
-                "persona_ids": ["skeptic"]
-            })
             
             # 3. Send Transcript Chunk
             # Mock LLM to return an interjection

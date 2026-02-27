@@ -91,7 +91,6 @@ export interface Challenge {
     session_id: string;
     persona_id: string;
     question: string;
-    context_source: string;
     difficulty: string;
     slide_index?: number;
     ideal_answer: string;

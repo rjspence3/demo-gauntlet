@@ -71,6 +71,12 @@ class Config(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_KEY_PREFIX: str = "dg:"  # Unique prefix to avoid key collisions with other projects
 
+    # DSPy Configuration
+    # Set DSPY_PROGRAM_PATH to the path of a compiled GauntletAgent JSON file
+    # to enable DSPy-optimized ideal answer generation.
+    # Run backend/dspy_optimization/optimize.py to produce this file.
+    DSPY_PROGRAM_PATH: str | None = None
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property

@@ -1,51 +1,43 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, BackgroundTasks
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from backend.orchestrator.session import session_manager
 from backend.orchestrator.loop import OrchestratorLoop
 from backend.challenges.personas import ChallengerRegistry
 
 router = APIRouter(prefix="/live", tags=["live"])
 
-# Initialize Orchestrator with the global session manager
-# In a real app, this should be dependency injected or handled in lifespan
 orchestrator = OrchestratorLoop(session_manager)
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
-    await session_manager.connect(websocket)
+    await websocket.accept()
+    session_id: str | None = None
     try:
         while True:
             data = await websocket.receive_json()
-            
             msg_type = data.get("type")
-            
+
             if msg_type == "init_session":
-                # Initialize with specific personas
-                received_session_id = data.get("session_id", "default")
-                # TODO: In future, use received_session_id to partition state
+                session_id = data.get("session_id", "default")
                 persona_ids = data.get("persona_ids", [])
                 registry = ChallengerRegistry()
-                selected_personas = []
-                for pid in persona_ids:
-                    p = registry.get_persona(pid)
-                    if p:
-                        selected_personas.append(p)
-                
-                # Default if none selected
+                selected_personas = [p for pid in persona_ids if (p := registry.get_persona(pid))]
                 if not selected_personas:
                     selected_personas = registry.list_personas()[:2]
-                    
-                session_manager.set_personas(selected_personas)
-                
-            elif msg_type == "transcript_chunk":
+
+                session_manager.register_connection(websocket, session_id)
+                session_manager.set_personas(session_id, selected_personas)
+                await session_manager.broadcast_state(session_id)
+
+            elif msg_type == "transcript_chunk" and session_id:
                 text = data.get("text", "")
-                await session_manager.add_transcript_chunk(text)
-                # Trigger orchestrator (fire and forget / background not easily available in WS loop same way)
-                # We can just await it or spawn task
-                await orchestrator.process_transcript_update(session_id="default")
-                
+                await session_manager.add_transcript_chunk(session_id, text)
+                await orchestrator.process_transcript_update(session_id)
+
     except WebSocketDisconnect:
-        session_manager.disconnect(websocket)
+        if session_id:
+            session_manager.disconnect(websocket, session_id)
     except Exception as e:
-        # Log error but don't crash server
-        print(f"WebSocket error: {e}")
-        session_manager.disconnect(websocket)
+        import logging
+        logging.getLogger(__name__).error(f"WebSocket error: {e}")
+        if session_id:
+            session_manager.disconnect(websocket, session_id)
