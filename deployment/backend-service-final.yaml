@@ -22,12 +22,24 @@ spec:
           value: BRAVE_KEY_REDACTED
         - name: BETA_INVITE_CODE
           value: INVITE_CODE_REDACTED
-        image: gcr.io/substack-digest-05449/demo-gauntlet-backend@sha256:97656fad1e3870b2586eb0b6807dee9a0beadc9a4280bd3238ddf1782cd8752b
+        - name: SECRET_KEY
+          value: SECRET_KEY_REDACTED
+        - name: ALLOWED_ORIGINS
+          value: "*"
+        image: gcr.io/substack-digest-05449/demo-gauntlet-backend@sha256:2d7f6733f4dbfa04fcb542cf4a1e1564cbb3d7e7943d4545d93491fa3f86ece6
         name: backend
         ports:
         - containerPort: 8000
+        resources:
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
       - image: redis:7-alpine
         name: redis
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
       - command:
         - arq
         - backend.worker.WorkerSettings
@@ -38,5 +50,9 @@ spec:
           value: OPENAI_KEY_REDACTED
         - name: BRAVE_API_KEY
           value: BRAVE_KEY_REDACTED
-        image: gcr.io/substack-digest-05449/demo-gauntlet-backend:latest
+        image: gcr.io/substack-digest-05449/demo-gauntlet-backend@sha256:2d7f6733f4dbfa04fcb542cf4a1e1564cbb3d7e7943d4545d93491fa3f86ece6
         name: worker
+        resources:
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
