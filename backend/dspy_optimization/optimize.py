@@ -51,14 +51,13 @@ def load_dataset(file_path: str) -> List[dspy.Example]:
     return dataset
 
 def main():
-    if not config.OPENAI_API_KEY:
-        print("Error: OPENAI_API_KEY not found in environment or .env file.")
+    if not config.ANTHROPIC_API_KEY:
+        print("Error: ANTHROPIC_API_KEY not found in environment or .env file.")
         return
 
     # Configure DSPy
-    # Using gpt-4o as generic capable model. User might need to tune this.
     try:
-        lm = dspy.LM("openai/gpt-4o", api_key=config.OPENAI_API_KEY)
+        lm = dspy.LM("anthropic/claude-sonnet-4-5", api_key=config.ANTHROPIC_API_KEY)
         dspy.settings.configure(lm=lm)
     except Exception as e:
         print(f"Failed to configure DSPy LM: {e}")

@@ -59,12 +59,12 @@ def evaluate_single(item, agent, engine, agent_name):
         return {"score": 0.0, "response": "ERROR", "breakdown": {}}
 
 def main():
-    if not config.OPENAI_API_KEY:
-        print("Error: OPENAI_API_KEY not found.")
+    if not config.ANTHROPIC_API_KEY:
+        print("Error: ANTHROPIC_API_KEY not found.")
         return
 
     # 1. Config
-    lm = dspy.LM("openai/gpt-4o", api_key=config.OPENAI_API_KEY)
+    lm = dspy.LM("anthropic/claude-sonnet-4-5", api_key=config.ANTHROPIC_API_KEY)
     dspy.settings.configure(lm=lm)
     engine = get_engine()
 

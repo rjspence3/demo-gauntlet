@@ -2,7 +2,7 @@ import os
 import time
 from typing import Dict, Optional
 
-from backend.models.llm import OpenAIClient, LLMClient
+from backend.models.llm import AnthropicClient, LLMClient
 from backend.probes.models import InteractionResult, ConversationContext
 from backend.probes.config import ENHANCED_PERSONAS
 
@@ -12,15 +12,10 @@ class AgentTestHarness:
     def __init__(self, llm_client: Optional[LLMClient] = None):
         """Initialize with LLM client."""
         if llm_client is None:
-            api_key = os.environ.get("OPENAI_API_KEY")
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
             if not api_key:
-                # We raise a gentle warning or error, but let's stick to the original logic:
-                # Original logic raised ValueError. We'll do the same but more robustly.
-                # However, for default usage, we might want to check the environment.
-                if not os.environ.get("OPENAI_API_KEY"):
-                   raise ValueError("OPENAI_API_KEY environment variable required")
-                
-            self.llm = OpenAIClient(api_key=api_key, model="gpt-4o")
+                raise ValueError("ANTHROPIC_API_KEY environment variable required")
+            self.llm = AnthropicClient(api_key=api_key, model="claude-sonnet-4-5")
         else:
             self.llm = llm_client
 

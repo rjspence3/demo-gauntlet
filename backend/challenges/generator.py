@@ -40,7 +40,7 @@ class ChallengeGenerator:
         try:
             import dspy
             from backend.dspy_optimization.gauntlet_agent import GauntletAgent
-            lm = dspy.LM("openai/gpt-4o", api_key=config.OPENAI_API_KEY)
+            lm = dspy.LM("anthropic/claude-sonnet-4-5", api_key=config.ANTHROPIC_API_KEY)
             dspy.configure(lm=lm)
             agent = GauntletAgent.from_file(config.DSPY_PROGRAM_PATH)
             logger.info(f"Loaded DSPy agent from {config.DSPY_PROGRAM_PATH}")

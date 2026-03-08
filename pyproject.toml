@@ -16,6 +16,7 @@ dependencies = [
     "requests",
     "pydantic-settings",
     "python-multipart",
+    "anthropic",
     "openai",
     "pdf2image",
     "pytesseract",

@@ -180,6 +180,96 @@ class MockLLM(LLMClient):
         """Check if the LLM provider is reachable."""
         return True
 
+class AnthropicClient(LLMClient):
+    """
+    Anthropic LLM client implementation.
+    """
+    def __init__(self, api_key: Optional[str] = None, model: str = "claude-sonnet-4-5"):
+        try:
+            # pylint: disable=import-outside-toplevel
+            import anthropic
+            self.client = anthropic.Anthropic(api_key=api_key)
+            self.model = model
+        except ImportError as exc:
+            raise ImportError("anthropic package is not installed. Run `pip install anthropic`.") from exc
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True
+    )
+    def complete(self, prompt: str) -> str:
+        """Generate text from a prompt."""
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.content[0].text if response.content else ""
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True
+    )
+    def complete_structured(self, prompt: str, schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Generate structured JSON from a prompt."""
+        system_prompt = "You are a helpful assistant that outputs JSON only. Do not include any explanation or markdown, just the raw JSON object."
+        if schema:
+            system_prompt += f" Follow this schema: {json.dumps(schema)}"
+
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            system=system_prompt,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        content = response.content[0].text if response.content else "{}"
+        # Strip markdown code fences if present
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        return dict(json.loads(content))
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True
+    )
+    def complete_with_system(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        structured: bool = False
+    ) -> Dict[str, Any] | str:
+        """Generate response with separate system and user prompts."""
+        if structured:
+            system_prompt = system_prompt + "\n\nRespond with a valid JSON object only. Do not include any explanation or markdown."
+
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}]
+        )
+        content = response.content[0].text if response.content else ""
+
+        if structured:
+            content = content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            return dict(json.loads(content)) if content else {}
+        return content
+
+    def health_check(self) -> bool:
+        """Check if the Anthropic API is reachable."""
+        try:
+            self.client.models.list()
+            return True
+        except Exception:
+            return False
+
+
 class OpenAIClient(LLMClient):
     """
     OpenAI LLM client implementation.

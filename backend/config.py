@@ -15,6 +15,7 @@ class Config(BaseSettings):
     VERSION: str = "0.1.0"
     
     # API Keys
+    ANTHROPIC_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     BRAVE_API_KEY: str | None = None
 
@@ -44,9 +45,8 @@ class Config(BaseSettings):
                 logging.critical("SECURITY CRITICAL: Running in production with default SECRET_KEY! Application execution stopped.")
                 raise ValueError("SECRET_KEY must be changed from default in production environment.")
             
-            if not self.OPENAI_API_KEY:
-                # Assuming OpenAI is critical for this app
-                raise ValueError("OPENAI_API_KEY is required in production.")
+            if not self.ANTHROPIC_API_KEY:
+                raise ValueError("ANTHROPIC_API_KEY is required in production.")
 
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30

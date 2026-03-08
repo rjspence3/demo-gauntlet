@@ -29,12 +29,12 @@ class SyntheticChallengeGenerator(dspy.Signature):
     ideal_answer = dspy.OutputField(desc="A perfect response that addresses the persona respectfully but firmly using the evidence.")
 
 def generate_dataset(count: int = 20, output_file: str = "synthetic_challenges.json"):
-    if not config.OPENAI_API_KEY:
-        print("Error: OPENAI_API_KEY not found.")
+    if not config.ANTHROPIC_API_KEY:
+        print("Error: ANTHROPIC_API_KEY not found.")
         return
 
     # Setup generic powerful model for generation
-    lm = dspy.LM("openai/gpt-4o", api_key=config.OPENAI_API_KEY, max_tokens=1000)
+    lm = dspy.LM("anthropic/claude-sonnet-4-5", api_key=config.ANTHROPIC_API_KEY, max_tokens=1000)
     dspy.settings.configure(lm=lm)
     
     generator = dspy.Predict(SyntheticChallengeGenerator)

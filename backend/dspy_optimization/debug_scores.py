@@ -15,12 +15,12 @@ from backend.dspy_optimization.gauntlet_agent import GauntletAgent
 from backend.dspy_optimization.metrics import get_engine
 
 def run_diagnostics():
-    if not config.OPENAI_API_KEY:
-        print("Error: OPENAI_API_KEY not found.")
+    if not config.ANTHROPIC_API_KEY:
+        print("Error: ANTHROPIC_API_KEY not found.")
         return
 
     # 1. Setup
-    lm = dspy.LM("openai/gpt-4o", api_key=config.OPENAI_API_KEY)
+    lm = dspy.LM("anthropic/claude-sonnet-4-5", api_key=config.ANTHROPIC_API_KEY)
     dspy.settings.configure(lm=lm)
 
     # 2. Load the "Brain"
