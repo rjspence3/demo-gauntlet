@@ -247,6 +247,19 @@ function App() {
                     <SummaryView sessionId={sessionId} onRestart={() => setView('upload')} />
                 )}
             </main>
+
+            <footer className="border-t border-slate-800 py-4 px-6 text-center">
+                <p className="text-xs text-slate-500">
+                    Demo Gauntlet &middot; Built by{" "}
+                    <a
+                        href="https://nomouthlabs.com"
+                        className="underline hover:text-slate-300 transition-colors"
+                    >
+                        Rob Spencer
+                    </a>
+                    {" "}&middot; nomouthlabs.com
+                </p>
+            </footer>
         </DGLayoutShell>
     );
 }
