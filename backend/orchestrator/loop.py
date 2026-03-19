@@ -3,7 +3,7 @@ import asyncio
 import json
 from typing import Optional, Dict
 from backend.orchestrator.session import LiveSessionManager, AgentState
-from backend.models.llm import OpenAIClient, MockLLM, LLMClient
+from backend.models.llm import AnthropicClient, OpenAIClient, MockLLM, LLMClient
 from backend.config import config
 from backend.models.core import ChallengerPersona
 
@@ -18,10 +18,12 @@ class OrchestratorLoop:
         self._locks: Dict[str, asyncio.Lock] = {}
 
     def _setup_llm(self) -> None:
-        if config.OPENAI_API_KEY:
+        if config.ANTHROPIC_API_KEY:
+            self.llm = AnthropicClient(api_key=config.ANTHROPIC_API_KEY, model="claude-sonnet-4-5")
+        elif config.OPENAI_API_KEY:
             self.llm = OpenAIClient(api_key=config.OPENAI_API_KEY, model="gpt-4o")
         else:
-            logger.warning("No OpenAI API key found. Using Mock LLM for Orchestrator.")
+            logger.warning("No LLM API key found. Using Mock LLM for Orchestrator.")
             self.llm = MockLLM()
 
     def _get_lock(self, session_id: str) -> asyncio.Lock:

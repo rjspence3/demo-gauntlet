@@ -293,7 +293,7 @@ class OpenAIClient(LLMClient):
     def _should_retry_error(self, exception: Exception) -> bool:
         """Check if the error is retryable."""
         # Add specific OpenAI errors here if needed, e.g. RateLimitError, APIConnectionError
-        return True 
+        return True
 
     @retry(
         stop=stop_after_attempt(3),
@@ -380,3 +380,24 @@ class OpenAIClient(LLMClient):
             return True
         except Exception:
             return False
+
+
+def create_llm_client(
+    anthropic_api_key: Optional[str] = None,
+    openai_api_key: Optional[str] = None,
+    anthropic_model: str = "claude-sonnet-4-5",
+    openai_model: str = "gpt-4o",
+) -> LLMClient:
+    """
+    Create the appropriate LLM client, preferring Anthropic (Claude) over OpenAI.
+
+    Checks ANTHROPIC_API_KEY first; falls back to OPENAI_API_KEY if not set.
+    Raises ValueError if neither key is provided.
+    """
+    if anthropic_api_key:
+        return AnthropicClient(api_key=anthropic_api_key, model=anthropic_model)
+    if openai_api_key:
+        return OpenAIClient(api_key=openai_api_key, model=openai_model)
+    raise ValueError(
+        "No LLM API key configured. Set ANTHROPIC_API_KEY (preferred) or OPENAI_API_KEY."
+    )

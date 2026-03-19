@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from backend.logger import get_logger
 from backend.research.agent import ResearchAgent
 from backend.models.core import ResearchDossier
-from backend.models.llm import OpenAIClient, MockLLM, LLMClient
+from backend.models.llm import create_llm_client, MockLLM, LLMClient
 from backend.research.client import MockSearchClient, BraveSearchClient, SearchClient
 from backend.config import config
 
@@ -18,12 +18,17 @@ session_store = SessionStore()
 logger = get_logger(__name__)
 
 def get_agent() -> ResearchAgent:
-    """Dependency provider for ResearchAgent."""
-    llm: LLMClient
-    if config.OPENAI_API_KEY:
-        llm = OpenAIClient(api_key=config.OPENAI_API_KEY)
-    else:
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is missing. Please configure it in .env")
+    """Dependency provider for ResearchAgent. Prefers Anthropic; falls back to OpenAI."""
+    try:
+        llm: LLMClient = create_llm_client(
+            anthropic_api_key=config.ANTHROPIC_API_KEY,
+            openai_api_key=config.OPENAI_API_KEY,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="No LLM API key configured. Set ANTHROPIC_API_KEY (preferred) or OPENAI_API_KEY."
+        ) from exc
 
     search: SearchClient
     if config.BRAVE_API_KEY:

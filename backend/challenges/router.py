@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from backend.models.core import Challenge, ChallengerPersona, ResearchDossier
 from backend.challenges.personas import ChallengerRegistry
 from backend.challenges.generator import ChallengeGenerator
-from backend.models.llm import OpenAIClient, MockLLM, LLMClient
+from backend.models.llm import create_llm_client, MockLLM, LLMClient
 from backend.models.store import DeckRetriever
 from backend.models.fact_store import FactStore
 from backend.config import config
@@ -22,10 +22,17 @@ session_store = SessionStore()
 
 # Dependency injection
 def get_llm() -> LLMClient:
-    """Dependency provider for LLMClient."""
-    if config.OPENAI_API_KEY:
-        return OpenAIClient(api_key=config.OPENAI_API_KEY)
-    raise HTTPException(status_code=500, detail="OPENAI_API_KEY is missing. Please configure it in .env")
+    """Dependency provider for LLMClient. Prefers Anthropic; falls back to OpenAI."""
+    try:
+        return create_llm_client(
+            anthropic_api_key=config.ANTHROPIC_API_KEY,
+            openai_api_key=config.OPENAI_API_KEY,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="No LLM API key configured. Set ANTHROPIC_API_KEY (preferred) or OPENAI_API_KEY."
+        ) from exc
 
 def get_deck_retriever() -> DeckRetriever:
     """Dependency provider for DeckRetriever."""
@@ -67,14 +74,14 @@ async def generate_challenges(
     persona = registry.get_persona(generate_request.persona_id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
-        
+
     # Fetch Research Dossier
     dossier = session_store.get_dossier(generate_request.session_id)
     if not dossier:
         dossier = ResearchDossier(session_id=generate_request.session_id)
-        
+
     # Fetch Slides (needed for precompute)
-    # Note: SessionStore needs to support retrieving slides. 
+    # Note: SessionStore needs to support retrieving slides.
     # For now, we assume we can get them or reconstruct them.
     # If SessionStore doesn't have get_slides, we might need to add it or fetch from somewhere else.
     # Assuming session_store has a way to get slides, or we pass them.
@@ -85,7 +92,7 @@ async def generate_challenges(
 
     # Fetch Deck Context
     deck_context = session_store.get_deck_summary(generate_request.session_id) or "No context available."
-    
+
     challenges = await asyncio.to_thread(
         generator.generate_challenges,
         session_id=generate_request.session_id,
@@ -94,10 +101,10 @@ async def generate_challenges(
         dossier=dossier,
         slides=slides or []
     )
-    
+
     # Save challenges
     session_store.save_challenges(generate_request.session_id, challenges)
-    
+
     return challenges
 
 @router.get("/session/{session_id}", response_model=List[Challenge])

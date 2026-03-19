@@ -4,7 +4,7 @@ API router for synthetic personhood probe endpoints.
 import asyncio
 from dataclasses import asdict
 from fastapi import APIRouter, HTTPException
-from backend.models.llm import OpenAIClient
+from backend.models.llm import create_llm_client
 from backend.config import config
 from backend.probes.runner import run_full_probe_suite
 from backend.probes.config import ENHANCED_PERSONAS
@@ -31,11 +31,17 @@ async def run_probes(agent_id: str) -> dict:
             detail=f"Unknown agent '{agent_id}'. Available: {list(ENHANCED_PERSONAS.keys())}"
         )
 
-    if not config.OPENAI_API_KEY:
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is required for probes")
+    if not config.ANTHROPIC_API_KEY and not config.OPENAI_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="No LLM API key configured. Set ANTHROPIC_API_KEY (preferred) or OPENAI_API_KEY."
+        )
 
     try:
-        llm = OpenAIClient(api_key=config.OPENAI_API_KEY)
+        llm = create_llm_client(
+            anthropic_api_key=config.ANTHROPIC_API_KEY,
+            openai_api_key=config.OPENAI_API_KEY,
+        )
         scorecard = await asyncio.to_thread(run_full_probe_suite, agent_id, llm)
         return asdict(scorecard)
     except Exception as e:
