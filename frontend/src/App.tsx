@@ -6,18 +6,18 @@ import { liveClient } from './api/live'; // Ensure client is initialized
 import { LiveSessionMode } from './components/LiveSessionMode';
 import { DemoRoom } from './components/DemoRoom';
 import { SummaryView } from './components/SummaryView';
-import { AuthView } from './components/AuthView';
-import { setAuthToken, uploadDeck, getSessionStatus, generateResearch, listPersonas, precomputeChallenges } from './api/client';
-import { Swords, BarChart, Zap, Users, LogOut } from 'lucide-react';
-import { cn } from './lib/utils';
+import { setAuthToken, loginWithCode, uploadDeck, getSessionStatus, generateResearch, listPersonas, precomputeChallenges } from './api/client';
+import { Swords, BarChart, Zap, Users, Loader2 } from 'lucide-react';
 import { DGLayoutShell, DGIconButton } from './components/ui';
 
 type View = 'upload' | 'research' | 'selection' | 'challenge' | 'live' | 'summary';
 
-
+// Public demo code — allows open access without manual invite entry
+const DEMO_INVITE_CODE = 'INVITE_CODE_REDACTED';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [view, setView] = useState<View>('upload');
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
@@ -26,14 +26,32 @@ function App() {
     const [challengers, setChallengers] = useState<Challenger[]>([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            setAuthToken(token);
-            setIsAuthenticated(true);
-        }
+        const autoLogin = async () => {
+            // Reuse existing token if valid
+            const existingToken = localStorage.getItem('token');
+            if (existingToken) {
+                setAuthToken(existingToken);
+                setIsAuthenticated(true);
+                setIsAuthLoading(false);
+                return;
+            }
+            // Auto-login with public demo code — no user interaction required
+            try {
+                const tokenData = await loginWithCode(DEMO_INVITE_CODE);
+                setAuthToken(tokenData.access_token);
+                localStorage.setItem('token', tokenData.access_token);
+                setIsAuthenticated(true);
+            } catch (err) {
+                console.error("Auto-login failed:", err);
+                // Still mark loading done so app renders (API calls will 401 gracefully)
+            } finally {
+                setIsAuthLoading(false);
+            }
+        };
+        autoLogin();
     }, []);
 
-    // Fetch personas on load (or when auth changes)
+    // Fetch personas once authenticated
     useEffect(() => {
         if (isAuthenticated) {
             const fetchPersonas = async () => {
@@ -96,15 +114,9 @@ function App() {
         return () => { stopped = true; };
     }, [view, sessionId]);
 
-    const handleLoginSuccess = () => {
-        setIsAuthenticated(true);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        setAuthToken(null);
-        setIsAuthenticated(false);
+    const handleNewSession = () => {
         setSessionId(null);
+        setSelectedPersonaIds([]);
         setView('upload');
     };
 
@@ -135,8 +147,17 @@ function App() {
         }
     };
 
-    if (!isAuthenticated) {
-        return <AuthView onAuthSuccess={handleLoginSuccess} />;
+    if (isAuthLoading) {
+        return (
+            <DGLayoutShell>
+                <div className="min-h-screen flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
+                        <p className="text-slate-400 text-sm font-mono animate-pulse">Initializing...</p>
+                    </div>
+                </div>
+            </DGLayoutShell>
+        );
     }
 
     return (
@@ -146,7 +167,7 @@ function App() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
                     <button
                         className="flex items-center space-x-2 sm:space-x-3 group"
-                        onClick={() => setView('upload')}
+                        onClick={handleNewSession}
                     >
                         <div className="relative">
                             <div className="absolute inset-0 bg-cyan-400 blur-md opacity-20 group-hover:opacity-50 transition-opacity"></div>
@@ -200,11 +221,11 @@ function App() {
                         )}
 
                         <DGIconButton
-                            icon={<LogOut className="w-4 sm:w-5 h-4 sm:h-5" />}
-                            ariaLabel="Logout"
-                            tooltip="Logout"
+                            icon={<Swords className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />}
+                            ariaLabel="New session"
+                            tooltip="New Session"
                             size="sm"
-                            onClick={handleLogout}
+                            onClick={handleNewSession}
                         />
                     </div>
                 </div>
@@ -244,7 +265,7 @@ function App() {
                 )}
 
                 {view === 'summary' && sessionId && (
-                    <SummaryView sessionId={sessionId} onRestart={() => setView('upload')} />
+                    <SummaryView sessionId={sessionId} onRestart={handleNewSession} />
                 )}
             </main>
 
