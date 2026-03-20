@@ -1,17 +1,13 @@
-# Summary: Wire Claude as primary LLM provider in demoGauntlet backend
+# Summary: Removed invite gate and aligned UI to dark theme
 
 ## What was done
-Added a `create_llm_client()` factory function to `backend/models/llm.py` that selects
-Anthropic (`claude-sonnet-4-5`) when `ANTHROPIC_API_KEY` is set, falling back to
-OpenAI (`gpt-4o`) when `OPENAI_API_KEY` is set. Updated the four call sites that
-hardcoded `OpenAIClient` to use this factory.
+Auto-login on mount using the existing `/auth/login-with-code` endpoint eliminates the invite gate without breaking backend auth. Three main-flow components (`DeckUpload`, `ProcessingScreen`, `ChallengerSelection`) were converted from the old light `gray-/blue-` theme to match the app shell's dark `slate-/cyan-` theme. Build and lint pass; pushed to origin; Vercel deploy triggered.
 
 ## Key findings / Output
-- `AnthropicClient` and `ANTHROPIC_API_KEY` config were **already implemented** — the gap was only in the four router/orchestrator files that still instantiated `OpenAIClient` directly.
-- `anthropic>=0.40.0` was **already in `requirements.txt`** — no dependency changes needed.
-- 5 files modified: `backend/models/llm.py` (+factory), `challenges/router.py`, `research/router.py`, `probes/router.py`, `orchestrator/loop.py`
-- All files pass `py_compile`; public API surface verified unchanged.
+- **Option B chosen**: backend enforces auth on all routes via `get_current_user` — purely frontend gate removal would have broken all API calls with 401s
+- **Root UI issue**: DeckUpload, ProcessingScreen, ChallengerSelection were white-on-black — all three rewritten to `DGCard`-based dark theme with cyan accents
+- **Invite code**: `INVITE_CODE_REDACTED` found in `deployment/backend-service-final.yaml` — also contains plaintext API keys that should be rotated
 
 ## Actions needed
-Set `ANTHROPIC_API_KEY` in `.env` or deployment environment. No other configuration
-required — `requirements.txt` already includes `anthropic>=0.40.0`.
+- Wait ~3 min for Vercel to finish deploying, then verify at https://demo-gauntlet-ui.vercel.app
+- Consider rotating the API keys exposed in `deployment/backend-service-final.yaml` (Anthropic, OpenAI, Brave)
