@@ -1,6 +1,3 @@
-<!-- AUTO-GENERATED from ports.json — do not edit manually -->
-<!-- Regenerate: python3 ~/Development/generate_claude_md.py --apply -->
-
 # Demo Gauntlet
 
 FastAPI + Python project.
@@ -20,25 +17,14 @@ pip install -e ".[dev]"  # includes test dependencies
 
 ---
 
-## Local Access
-
-| Service | Domain | Port |
-|---------|--------|------|
-| Api | http://demo-gauntlet-api.test | 5003 |
-| Frontend | http://demo-gauntlet.test | 3103 |
-
-Port assignments defined in `~/Development/dev/ports.json`.
-
----
-
 ## Commands
 
 ```bash
 # Start API
-uvicorn backend.main:app --host 127.0.0.1 --reload --port 5003
+uvicorn backend.main:app --host 127.0.0.1 --reload --port 8001
 
 # Start frontend
-npm run dev -- --port 3103 --strictPort
+npm run dev
 
 # Run tests
 pytest
@@ -103,12 +89,6 @@ scripts/
 
 ---
 
-## Isolation Settings
-
-| Resource | Setting |
-|----------|---------|
-| Redis port | 6381 |
-| Redis prefix | `dg:` |
 ## Notes
 
 - Tech: FastAPI, Python

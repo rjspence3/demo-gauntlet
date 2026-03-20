@@ -30,7 +30,7 @@
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/imaglide/demoGauntet.git
+git clone https://github.com/rjspence3/demo-gauntlet.git
 cd demoGauntlet
 ```
 
@@ -80,35 +80,3 @@ Access the application at `http://localhost:5173`.
 ## 📄 License
 MIT
 
----
-
-## Local Development Routing
-
-This project is part of a multi-project dev environment with Caddy reverse proxy.
-
-| Service | Domain | Direct |
-|---------|--------|--------|
-| Frontend | http://demo-gauntlet.test/ | http://http://demo-gauntlet.test/ |
-| API | http://demo-gauntlet-api.test/ | http://http://demo-gauntlet-api.test/ |
-
-**Start services:**
-```bash
-# Frontend (Vite)
-cd frontend && npm run dev:demo-gauntlet
-
-# API (FastAPI)
-./dev/run_api.sh
-```
-
-**Full environment:**
-```bash
-# Start all services + Caddy proxy
-~/Development/dev/run_all.sh
-
-# Stop all services
-~/Development/dev/stop_all.sh
-```
-
-**Prerequisites:** Caddy installed (`brew install caddy`), hosts entries configured (see `~/Development/dev/hosts.test.txt`)
-
-**Dashboard:** http://devhub.test/ | **Port registry:** `~/Development/dev/ports.json`
