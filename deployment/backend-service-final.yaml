@@ -17,13 +17,25 @@ spec:
         - name: PROJECT_NAME
           value: Demo Gauntlet
         - name: OPENAI_API_KEY
-          value: OPENAI_KEY_REDACTED
+          valueFrom:
+            secretKeyRef:
+              name: demo-gauntlet-secrets
+              key: openai-api-key
         - name: BRAVE_API_KEY
-          value: BRAVE_KEY_REDACTED
+          valueFrom:
+            secretKeyRef:
+              name: demo-gauntlet-secrets
+              key: brave-api-key
         - name: BETA_INVITE_CODE
-          value: INVITE_CODE_REDACTED
+          valueFrom:
+            secretKeyRef:
+              name: demo-gauntlet-secrets
+              key: beta-invite-code
         - name: SECRET_KEY
-          value: SECRET_KEY_REDACTED
+          valueFrom:
+            secretKeyRef:
+              name: demo-gauntlet-secrets
+              key: secret-key
         - name: ALLOWED_ORIGINS
           value: "*"
         image: gcr.io/substack-digest-05449/demo-gauntlet-backend@sha256:2d7f6733f4dbfa04fcb542cf4a1e1564cbb3d7e7943d4545d93491fa3f86ece6
@@ -47,9 +59,15 @@ spec:
         - name: REDIS_HOST
           value: localhost
         - name: OPENAI_API_KEY
-          value: OPENAI_KEY_REDACTED
+          valueFrom:
+            secretKeyRef:
+              name: demo-gauntlet-secrets
+              key: openai-api-key
         - name: BRAVE_API_KEY
-          value: BRAVE_KEY_REDACTED
+          valueFrom:
+            secretKeyRef:
+              name: demo-gauntlet-secrets
+              key: brave-api-key
         image: gcr.io/substack-digest-05449/demo-gauntlet-backend@sha256:2d7f6733f4dbfa04fcb542cf4a1e1564cbb3d7e7943d4545d93491fa3f86ece6
         name: worker
         resources:
