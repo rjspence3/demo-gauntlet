@@ -7,23 +7,24 @@
 -   **Deck Ingestion**: Upload PDF or PPTX decks. The system parses text and slides.
 -   **AI Research Agent**: Automatically researches competitors, industry trends, and compliance risks based on the deck content.
 -   **Challenger Personas**: Simulates realistic stakeholders (CTO, CFO, CMO) with distinct personalities and concerns.
--   **Real-time Evaluation**: Scores your answers on the fly using an LLM-based evaluation engine.
+-   **Real-time Evaluation**: Scores answers on the fly using an LLM-based evaluation engine with server-side ideal answer lookup.
 -   **Session Reporting**: Generates a detailed report card with strengths, weaknesses, and a readiness score.
--   **Security**: Built with security in mind (CORS restrictions, sanitized uploads, server-side scoring).
+-   **Security**: JWT-authenticated API, server-side scoring, upload size limits, per-session guest isolation.
 
 ## 🛠️ Tech Stack
 
--   **Backend**: Python, FastAPI, LangChain (or direct LLM calls), ChromaDB (Vector Store).
--   **Frontend**: React, TypeScript, Vite, TailwindCSS (or custom CSS).
--   **AI**: OpenAI GPT-4o (configurable).
--   **Search**: Brave Search / SerpAPI (optional).
+-   **Backend**: Python, FastAPI, ChromaDB (Vector Store), Arq + Redis (background processing).
+-   **Frontend**: React, TypeScript, Vite, TailwindCSS.
+-   **AI**: Anthropic Claude (primary), OpenAI (optional fallback).
+-   **Search**: Brave Search (optional).
 
 ## 📦 Installation
 
 ### Prerequisites
 -   Python 3.10+
 -   Node.js 18+
--   OpenAI API Key
+-   Redis (for background deck processing)
+-   Anthropic API Key (`ANTHROPIC_API_KEY`)
 -   **OCR Dependencies** (for slide parsing):
     -   `poppler` (macOS: `brew install poppler`, Ubuntu: `sudo apt-get install poppler-utils`)
     -   `tesseract` (macOS: `brew install tesseract`, Ubuntu: `sudo apt-get install tesseract-ocr`)
@@ -39,9 +40,11 @@ cd demoGauntlet
 # Create virtual environment and install dependencies
 make install
 
-# Configure Environment
+# Configure environment
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Edit .env and set at minimum:
+#   ANTHROPIC_API_KEY — required for all LLM calls
+#   SECRET_KEY        — required; any random string (e.g. openssl rand -hex 32)
 ```
 
 ### 3. Frontend Setup
@@ -51,10 +54,22 @@ npm install
 cd ..
 ```
 
+### 4. Optional: Demo Auto-Login
+To enable the one-click demo login (auto-submits a guest session with a preset code):
+
+```bash
+# In .env (backend):
+BETA_INVITE_CODE=your-invite-code
+
+# In frontend/.env (or set as build env var):
+VITE_DEMO_INVITE_CODE=your-invite-code
+```
+
+When `VITE_DEMO_INVITE_CODE` is set, the app automatically calls `/auth/login` with that code on page load. If the variable is not set, users must enter the code manually.
+
 ## 🏃‍♂️ Usage
 
 ### Run the Application
-You can run both backend and frontend using the Makefile:
 
 ```bash
 # Terminal 1: Backend
@@ -74,9 +89,13 @@ Access the application at `http://localhost:5173`.
 -   **Testing**: `make test`
 
 ## 🛡️ Security Notes
--   **CORS**: By default, the API only accepts requests from `http://localhost:5173`. Update `ALLOWED_ORIGINS` in `backend/config.py` for production.
+
+-   **Authentication**: All API endpoints that generate LLM calls or mutate data require a valid JWT. Tokens are issued by `/auth/login` and must be passed as `Authorization: Bearer <token>`.
+-   **Secret Key**: `SECRET_KEY` is used to sign JWTs. If the default value is detected at startup, the application logs a loud `WARNING`. In production (`ENV_MODE=production`) it refuses to start. Set this to any strong random value before exposing the service externally.
+-   **Upload Limits**: File uploads are capped at 50 MB (HTTP 413 if exceeded).
+-   **Server-Side Scoring**: Ideal answers are looked up server-side only; the client never controls the grading key.
+-   **CORS**: By default, the API only accepts requests from `http://localhost:5173`. Update `ALLOWED_ORIGINS` in `.env` for production.
 -   **Data**: Uploaded decks are stored in `data/decks`. Ensure this directory is secured in production.
 
 ## 📄 License
 MIT
-
