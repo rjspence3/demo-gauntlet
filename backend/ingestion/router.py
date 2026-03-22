@@ -2,20 +2,15 @@
 API router for ingestion-related endpoints.
 """
 import os
-import shutil
 import uuid
-from typing import Any, Annotated
+from typing import Any
 from dataclasses import asdict
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 from backend.ingestion.parser import extract_from_file
 from backend.ingestion.chunker import chunk_slide
 from backend.ingestion.tagger import tag_slide
 from backend.models.store import VectorStore
-# from backend.ingestion.processor import process_deck_upload # Removed
-from backend.api.deps import get_current_user
-from backend.models.db_models import User
 from backend.models.session import SessionStore
-from fastapi import Depends
 
 router = APIRouter(prefix="/ingestion", tags=["ingestion"])
 
@@ -25,11 +20,11 @@ store = VectorStore()
 @router.post("/upload")
 async def upload_deck(
     request: Request,
-    current_user: Annotated[User, Depends(get_current_user)],
     file: UploadFile = File(...)
 ) -> dict[str, Any]:
     """
     Uploads a deck, parses it, and ingests it into the vector store.
+    Auth removed: demo mode — open access for all visitors.
     """
     if not file.filename:
          raise HTTPException(status_code=400, detail="Filename is missing")
@@ -52,7 +47,7 @@ async def upload_deck(
     # Use BlobStorage to save the file
     from backend.services.blob_storage import get_blob_storage
     blob_storage = get_blob_storage()
-    
+
     try:
         file_path = blob_storage.save_upload(file, session_id)
     except Exception as e:
@@ -87,7 +82,7 @@ async def get_slides(session_id: str) -> list[dict[str, Any]]:
     Retrieves the slides for a given session.
     """
     session_store = SessionStore()
-    
+
     slides = session_store.get_slides(session_id)
     if not slides:
         # Check if session exists or is still processing
@@ -96,5 +91,5 @@ async def get_slides(session_id: str) -> list[dict[str, Any]]:
              return [] # Return empty list while processing
         elif status == "unknown":
              raise HTTPException(status_code=404, detail="Session not found")
-        
+
     return [asdict(s) for s in slides]

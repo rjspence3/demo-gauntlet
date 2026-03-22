@@ -7,42 +7,6 @@ const api = axios.create({
     },
 });
 
-// Add auth token to requests if available
-export const setAuthToken = (token: string | null) => {
-    if (token) {
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-        delete api.defaults.headers.common['Authorization'];
-    }
-};
-
-// Handle 401 responses
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Clear token and redirect to login if needed
-            // For now, we'll just let the caller handle the error or App.tsx handle the state
-            setAuthToken(null);
-            localStorage.removeItem('token');
-            window.location.href = '/'; // Simple redirect to root/login
-        }
-        return Promise.reject(error);
-    }
-);
-
-export interface Token {
-    access_token: string;
-    token_type: string;
-}
-
-export const loginWithCode = async (inviteCode: string): Promise<Token> => {
-    const response = await api.post<Token>('/auth/login-with-code', {
-        invite_code: inviteCode
-    });
-    return response.data;
-};
-
 export interface UploadResponse {
     session_id: string;
     filename: string;

@@ -6,74 +6,38 @@ import { liveClient } from './api/live'; // Ensure client is initialized
 import { LiveSessionMode } from './components/LiveSessionMode';
 import { DemoRoom } from './components/DemoRoom';
 import { SummaryView } from './components/SummaryView';
-import { setAuthToken, loginWithCode, uploadDeck, getSessionStatus, generateResearch, listPersonas, precomputeChallenges } from './api/client';
+import { uploadDeck, getSessionStatus, generateResearch, listPersonas, precomputeChallenges } from './api/client';
 import { Swords, BarChart, Zap, Users, Loader2 } from 'lucide-react';
 import { DGLayoutShell, DGIconButton } from './components/ui';
 
 type View = 'upload' | 'research' | 'selection' | 'challenge' | 'live' | 'summary';
 
-// Public demo code — loaded from build-time env var, never hardcoded in source
-const DEMO_INVITE_CODE = import.meta.env.VITE_DEMO_INVITE_CODE as string | undefined;
-
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [view, setView] = useState<View>('upload');
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
     const [processingStep, setProcessingStep] = useState<ProcessingStep>('uploading');
-
     const [challengers, setChallengers] = useState<Challenger[]>([]);
+    const [personasLoading, setPersonasLoading] = useState(true);
 
+    // Load personas once on mount — no auth required
     useEffect(() => {
-        const autoLogin = async () => {
-            // Reuse existing token if valid
-            const existingToken = localStorage.getItem('token');
-            if (existingToken) {
-                setAuthToken(existingToken);
-                setIsAuthenticated(true);
-                setIsAuthLoading(false);
-                return;
-            }
-            // Auto-login with public demo code from env var — no user interaction required
-            if (!DEMO_INVITE_CODE) {
-                console.warn("VITE_DEMO_INVITE_CODE is not set; auto-login skipped.");
-                setIsAuthLoading(false);
-                return;
-            }
+        const fetchPersonas = async () => {
             try {
-                const tokenData = await loginWithCode(DEMO_INVITE_CODE);
-                setAuthToken(tokenData.access_token);
-                localStorage.setItem('token', tokenData.access_token);
-                setIsAuthenticated(true);
+                const personas = await listPersonas();
+                const uiPersonas = personas.map(p => ({
+                    ...p,
+                    description: p.style,
+                }));
+                setChallengers(uiPersonas);
             } catch (err) {
-                console.error("Auto-login failed:", err);
-                // Still mark loading done so app renders (API calls will 401 gracefully)
+                console.error("Failed to fetch personas:", err);
             } finally {
-                setIsAuthLoading(false);
+                setPersonasLoading(false);
             }
         };
-        autoLogin();
+        fetchPersonas();
     }, []);
-
-    // Fetch personas once authenticated
-    useEffect(() => {
-        if (isAuthenticated) {
-            const fetchPersonas = async () => {
-                try {
-                    const personas = await listPersonas();
-                    const uiPersonas = personas.map(p => ({
-                        ...p,
-                        description: p.style,
-                    }));
-                    setChallengers(uiPersonas);
-                } catch (err) {
-                    console.error("Failed to fetch personas:", err);
-                }
-            };
-            fetchPersonas();
-        }
-    }, [isAuthenticated]);
 
     // Processing Logic
     useEffect(() => {
@@ -140,10 +104,7 @@ function App() {
     const handleStartSimulation = async (selectedIds: string[]) => {
         try {
             if (!sessionId) return;
-            // Precompute challenges
-            // We can show a loading state here too?
             await precomputeChallenges(sessionId, selectedIds);
-
             setSelectedPersonaIds(selectedIds);
             setView('challenge');
         } catch (err) {
@@ -152,7 +113,7 @@ function App() {
         }
     };
 
-    if (isAuthLoading) {
+    if (personasLoading) {
         return (
             <DGLayoutShell>
                 <div className="min-h-screen flex items-center justify-center">
