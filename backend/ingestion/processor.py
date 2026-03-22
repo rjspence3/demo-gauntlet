@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-logger = logging.getLogger(__name__)
-
 async def process_deck_upload_task(ctx: Dict[str, Any], file_path: str, session_id: str) -> None:
     """
     Arq task to process an uploaded deck.

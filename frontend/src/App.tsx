@@ -12,8 +12,8 @@ import { DGLayoutShell, DGIconButton } from './components/ui';
 
 type View = 'upload' | 'research' | 'selection' | 'challenge' | 'live' | 'summary';
 
-// Public demo code — allows open access without manual invite entry
-const DEMO_INVITE_CODE = 'INVITE_CODE_REDACTED';
+// Public demo code — loaded from build-time env var, never hardcoded in source
+const DEMO_INVITE_CODE = import.meta.env.VITE_DEMO_INVITE_CODE as string | undefined;
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,7 +35,12 @@ function App() {
                 setIsAuthLoading(false);
                 return;
             }
-            // Auto-login with public demo code — no user interaction required
+            // Auto-login with public demo code from env var — no user interaction required
+            if (!DEMO_INVITE_CODE) {
+                console.warn("VITE_DEMO_INVITE_CODE is not set; auto-login skipped.");
+                setIsAuthLoading(false);
+                return;
+            }
             try {
                 const tokenData = await loginWithCode(DEMO_INVITE_CODE);
                 setAuthToken(tokenData.access_token);

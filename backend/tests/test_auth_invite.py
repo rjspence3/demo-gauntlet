@@ -48,18 +48,19 @@ def session_fixture():
         yield session
 
 def test_login_with_code_success(client: TestClient, session: Session):
-    """Test login with correct code succeeds and creates guest user."""
+    """Test login with correct code succeeds and creates a unique guest user."""
     with patch.object(config, 'BETA_INVITE_CODE', "secret123"):
         response = client.post(
             "/auth/login-with-code",
             json={"invite_code": "secret123"}
         )
         assert response.status_code == 200
-        assert "access_token" in response.json()
-        
-        # Verify guest user created
-        user = session.exec(select(User).where(User.email == "guest@demo.com")).first()
-        assert user is not None
+        data = response.json()
+        assert "access_token" in data
+
+        # Verify a unique guest user was created (email follows guest-{uuid}@demo.com pattern)
+        users = session.exec(select(User).where(User.email.like("guest-%@demo.com"))).all()
+        assert len(users) >= 1
 
 def test_login_with_code_failure(client: TestClient, session: Session):
     """Test login with incorrect code fails."""

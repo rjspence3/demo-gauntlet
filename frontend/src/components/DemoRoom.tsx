@@ -117,8 +117,7 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                 sessionId,
                 activePersona.id,
                 activeChallenge.id,
-                userResponse,
-                activeChallenge.ideal_answer
+                userResponse
             );
             setScoreResult(result);
         } catch (err) {

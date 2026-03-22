@@ -115,6 +115,8 @@ class EvaluationEngine:
         return int(max(0, min(100, score)))
 
     def _count_syllables(self, word: str) -> int:
+        if not word:
+            return 1
         word = word.lower()
         count = 0
         vowels = "aeiouy"

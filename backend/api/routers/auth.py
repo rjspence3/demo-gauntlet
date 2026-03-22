@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
@@ -99,20 +100,17 @@ async def login_with_code(
             detail="Invalid invite code"
         )
     
-    # Use a consistent guest email
-    guest_email = "guest@demo.com"
-    user = session.exec(select(User).where(User.email == guest_email)).first()
-    
-    if not user:
-        # Create guest user if not exists
-        # Generate a random password that no one knows (we only auth via code)
-        import secrets
-        random_password = secrets.token_urlsafe(32)
-        hashed_password = get_password_hash(random_password)
-        user = User(email=guest_email, hashed_password=hashed_password)
-        session.add(user)
-        session.commit()
-        session.refresh(user)
+    # P1-1: Create a unique guest account per login to prevent cross-session data leakage.
+    # Guest accounts are invite-code-only; they never authenticate via password.
+    # Store a non-bcrypt locked marker to prevent password login entirely.
+    import hashlib, secrets
+    guest_email = f"guest-{uuid.uuid4()}@demo.com"
+    # "!" prefix makes this unparseable by passlib, ensuring no password login works
+    hashed_password = "!" + hashlib.sha256(secrets.token_bytes(32)).hexdigest()
+    user = User(email=guest_email, hashed_password=hashed_password)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
     
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

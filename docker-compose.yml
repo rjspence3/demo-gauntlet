@@ -40,6 +40,8 @@ services:
       - ./backend:/app/backend
     environment:
       - REDIS_HOST=redis
+    env_file:
+      - .env
     depends_on:
       - redis
       - backend

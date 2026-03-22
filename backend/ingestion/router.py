@@ -43,6 +43,11 @@ async def upload_deck(
             detail=f"Unsupported file type. Allowed: {allowed_extensions}"
         )
 
+    # P0-2: Reject uploads above 50MB to prevent DoS via large file
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
+
     session_id = str(uuid.uuid4())
     # Use BlobStorage to save the file
     from backend.services.blob_storage import get_blob_storage

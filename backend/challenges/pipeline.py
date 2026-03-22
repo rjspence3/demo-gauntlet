@@ -8,7 +8,7 @@ Chains together:
 4. QuestionSynthesisAgent - Generate targeted challenge questions
 """
 import time
-from typing import List, Optional, Protocol, Any
+from typing import Dict, List, Optional, Protocol, Any
 
 from backend.challenges.claim_extractor import ClaimExtractionAgent
 from backend.challenges.evidence_selector import EvidenceSelectionAgent

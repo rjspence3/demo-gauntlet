@@ -4,15 +4,19 @@ from fastapi.testclient import TestClient
 from backend.main import app
 from backend.orchestrator.session import session_manager
 from backend.api.routers.live import orchestrator
+from backend.services.auth import create_access_token
 from unittest.mock import AsyncMock, patch
 
 client = TestClient(app)
 
 def test_websocket_connection_and_flow():
+    # Generate a valid JWT for the WebSocket connection (P1-6 fix requires token)
+    token = create_access_token(data={"sub": "test@demo.com"})
+
     # Patch the orchestrator's LLM to force an interjection decision
     with patch.object(orchestrator.llm, 'complete_structured') as mock_llm:
-        # 1. Connect WS
-        with client.websocket_connect("/live/ws") as websocket:
+        # 1. Connect WS with auth token as query parameter
+        with client.websocket_connect(f"/live/ws?token={token}") as websocket:
             # 2. Init Session — state broadcast happens after init, not on raw connect
             websocket.send_json({
                 "type": "init_session",

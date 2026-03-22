@@ -156,15 +156,14 @@ export const submitAnswer = async (
     sessionId: string,
     personaId: string,
     challengeId: string,
-    userAnswer: string,
-    idealAnswer: string
+    userAnswer: string
 ): Promise<ScoreResponse> => {
     const response = await api.post<ScoreResponse>('/evaluation/score', {
         session_id: sessionId,
         persona_id: personaId,
         challenge_id: challengeId,
         user_answer: userAnswer,
-        ideal_answer: idealAnswer
+        // ideal_answer is intentionally omitted: server looks it up from stored challenge
     });
     return response.data;
 };
