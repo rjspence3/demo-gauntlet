@@ -92,7 +92,7 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
         };
 
         triggerChallenge();
-    }, [currentSlideIndex, sessionId, slides.length, personas, sessionChallenges]);
+    }, [currentSlideIndex, sessionId, slides.length, personas, sessionChallenges, selectedPersonaIds]);
 
     const handleNext = () => {
         if (currentSlideIndex < slides.length - 1) {
@@ -320,16 +320,21 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                         (!activeChallenge || scoreResult) && "opacity-50 pointer-events-none"
                     )}>
                         <div className="relative">
-                            <input
-                                type="text"
+                            <textarea
+                                rows={3}
                                 value={userResponse}
                                 onChange={(e) => setUserResponse(e.target.value)}
-                                placeholder={activeChallenge && !scoreResult ? "Type your response..." : "Waiting for challenge..."}
+                                placeholder={activeChallenge && !scoreResult ? "Type your response... (Enter to submit, Shift+Enter for newline)" : "Waiting for challenge..."}
                                 disabled={!activeChallenge || !!scoreResult || isSubmitting}
-                                className="w-full bg-slate-800/80 border border-slate-700/50 rounded-xl py-3.5 px-4 pr-14 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50 transition-all disabled:opacity-60 text-sm sm:text-base"
-                                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmitResponse()}
+                                className="w-full resize-none bg-slate-800/80 border border-slate-700/50 rounded-xl py-3.5 px-4 pr-14 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50 transition-all disabled:opacity-60 text-sm sm:text-base"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSubmitResponse();
+                                    }
+                                }}
                             />
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                            <div className="absolute right-2 bottom-3">
                                 <DGIconButton
                                     icon={isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                     ariaLabel={isSubmitting ? "Submitting response" : "Submit response"}

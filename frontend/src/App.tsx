@@ -19,6 +19,7 @@ function App() {
     const [processingStep, setProcessingStep] = useState<ProcessingStep>('uploading');
     const [challengers, setChallengers] = useState<Challenger[]>([]);
     const [personasLoading, setPersonasLoading] = useState(true);
+    const [personasError, setPersonasError] = useState(false);
 
     // Load personas once on mount — no auth required
     useEffect(() => {
@@ -32,6 +33,7 @@ function App() {
                 setChallengers(uiPersonas);
             } catch (err) {
                 console.error("Failed to fetch personas:", err);
+                setPersonasError(true);
             } finally {
                 setPersonasLoading(false);
             }
@@ -211,6 +213,7 @@ function App() {
                     <ChallengerSelection
                         challengers={challengers}
                         onStartSimulation={handleStartSimulation}
+                        loadError={personasError}
                     />
                 )}
 

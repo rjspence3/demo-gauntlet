@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DGCard, DGButton } from './ui';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export interface Challenger {
     id: string;
@@ -14,11 +14,13 @@ export interface Challenger {
 interface ChallengerSelectionProps {
     challengers: Challenger[];
     onStartSimulation: (selectedIds: string[]) => void;
+    loadError?: boolean;
 }
 
 export const ChallengerSelection: React.FC<ChallengerSelectionProps> = ({
     challengers,
     onStartSimulation,
+    loadError = false,
 }) => {
     const [selectedIds, setSelectedIds] = useState<string[]>(
         challengers.slice(0, 3).map(c => c.id)
@@ -43,10 +45,25 @@ export const ChallengerSelection: React.FC<ChallengerSelectionProps> = ({
                 </p>
             </div>
 
+            {(loadError || challengers.length === 0) && (
+                <DGCard className="p-6 mb-4 border-rose-500/30 bg-rose-500/5">
+                    <div className="flex items-center gap-3 text-rose-400">
+                        <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                        <div>
+                            <p className="font-medium text-sm">
+                                {loadError
+                                    ? "Failed to load challengers — the backend may be unavailable."
+                                    : "No challengers available. The backend returned an empty list."}
+                            </p>
+                            <p className="text-xs text-rose-400/70 mt-0.5">Try refreshing the page. If the issue persists, contact support.</p>
+                        </div>
+                    </div>
+                </DGCard>
+            )}
+
             <div className="flex-1 space-y-3">
                 {challengers.map((challenger) => {
                     const isSelected = selectedIds.includes(challenger.id);
-                    const evidencePercent = Math.min(100, (challenger.evidenceCount / 10) * 100);
 
                     return (
                         <DGCard
@@ -77,17 +94,8 @@ export const ChallengerSelection: React.FC<ChallengerSelectionProps> = ({
                                         <span className="text-xs text-slate-500">{challenger.role}</span>
                                     </div>
 
-                                    {/* Evidence bar + tags */}
+                                    {/* Tags */}
                                     <div className="flex items-center gap-3">
-                                        <div className="flex-1 max-w-[120px] h-1 bg-slate-800 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${isSelected ? 'bg-cyan-400' : 'bg-slate-600'}`}
-                                                style={{ width: `${evidencePercent}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-[11px] text-slate-500 flex-shrink-0">
-                                            {challenger.evidenceCount} facts
-                                        </span>
                                         <div className="hidden sm:flex flex-wrap gap-1">
                                             {challenger.tags.slice(0, 3).map(tag => (
                                                 <span
