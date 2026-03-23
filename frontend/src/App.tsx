@@ -245,7 +245,7 @@ function App() {
                         href="https://nomouthlabs.com"
                         className="underline hover:text-slate-300 transition-colors"
                     >
-                        Rob Spencer
+                        Rob Spence
                     </a>
                     {" "}&middot; nomouthlabs.com
                 </p>

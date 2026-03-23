@@ -1,3 +1,4 @@
+import logging
 """
 Arq worker configuration for background tasks.
 """
@@ -7,10 +8,10 @@ from backend.config import config
 from backend.ingestion.processor import process_deck_upload_task
 
 async def startup(ctx):
-    print("Worker starting...")
+    logging.info("Worker starting...")
 
 async def shutdown(ctx):
-    print("Worker shutting down...")
+    logging.info("Worker shutting down...")
 
 class WorkerSettings:
     functions = [process_deck_upload_task]
