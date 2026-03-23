@@ -3,7 +3,7 @@ name = "demo-gauntlet"
 version = "0.1.0"
 description = "Demo Gauntlet MVP"
 authors = [
-    {name = "Antigravity", email = "antigravity@deepmind.google"}
+    {name = "Rob Spence", email = "rjspence3@gmail.com"}
 ]
 dependencies = [
     "fastapi",
@@ -29,7 +29,8 @@ dependencies = [
     "arq",
     "redis",
     "python-json-logger",
-    "python-multipart"
+    "python-multipart",
+    "tenacity"
 ]
 requires-python = ">=3.9"
 
