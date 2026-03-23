@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Upload } from 'lucide-react';
-import { DGCard, DGButton } from './ui';
+import { Upload, Loader2 } from 'lucide-react';
+import { DGButton } from './ui';
 
 interface DeckUploadProps {
     onUploadComplete: (file: File) => void;
@@ -8,6 +8,7 @@ interface DeckUploadProps {
 
 export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
     const [isDragging, setIsDragging] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -54,6 +55,7 @@ export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
             return;
         }
 
+        setIsUploading(true);
         onUploadComplete(file);
     };
 
@@ -61,10 +63,10 @@ export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
         <div className="flex flex-col items-center justify-center min-h-[600px] w-full max-w-4xl mx-auto p-6">
             {/* Hero heading */}
             <div className="text-center mb-10 sm:mb-12">
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight leading-tight">
+                <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4 tracking-tight leading-tight">
                     Ready to run the gauntlet?
                 </h1>
-                <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed">
+                <p className="text-lg sm:text-xl text-slate-600 max-w-xl mx-auto leading-relaxed">
                     Upload your deck and benchmark your demo readiness against AI-powered challengers.
                 </p>
             </div>
@@ -75,32 +77,38 @@ export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
                     'w-full max-w-2xl rounded-2xl border-2 border-dashed transition-all duration-300 ease-in-out',
                     'flex flex-col items-center justify-center cursor-pointer py-16 px-8',
                     isDragging
-                        ? 'border-cyan-400 bg-cyan-400/5 scale-[1.02]'
-                        : 'border-slate-700 hover:border-slate-500 bg-slate-900/40 hover:bg-slate-900/60',
+                        ? 'border-orange-400 bg-orange-50 scale-[1.02]'
+                        : 'border-slate-300 hover:border-orange-300 bg-white hover:bg-orange-50/30',
+                    isUploading ? 'pointer-events-none opacity-70' : '',
                 ].join(' ')}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => document.getElementById('file-upload')?.click()}
+                onClick={() => !isUploading && document.getElementById('file-upload')?.click()}
             >
                 <div className="text-center">
                     <div className={[
                         'w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors',
-                        isDragging ? 'bg-cyan-400/20 text-cyan-400' : 'bg-slate-800 text-slate-400',
+                        isDragging ? 'bg-orange-100 text-orange-500' : 'bg-slate-100 text-slate-400',
                     ].join(' ')}>
-                        <Upload className="w-8 h-8" />
+                        {isUploading
+                            ? <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                            : <Upload className="w-8 h-8" />
+                        }
                     </div>
 
-                    <h3 className="text-lg font-semibold text-white mb-2">
-                        Drag & drop your deck here
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                        {isUploading ? 'Uploading...' : 'Drag & drop your deck here'}
                     </h3>
                     <p className="text-slate-500 mb-8 text-sm">
                         Supports PDF, PPTX, or PPT
                     </p>
 
-                    <DGButton variant="primary" size="md" className="pointer-events-none">
-                        Select File
-                    </DGButton>
+                    {!isUploading && (
+                        <DGButton variant="primary" size="md" className="pointer-events-none">
+                            Select File
+                        </DGButton>
+                    )}
 
                     <input
                         id="file-upload"
@@ -113,14 +121,14 @@ export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
             </div>
 
             {error && (
-                <DGCard variant="elevated" className="mt-6 max-w-2xl w-full border-rose-500/40 bg-rose-500/10 p-4">
-                    <div className="flex items-center gap-3 text-rose-300 text-sm">
+                <div className="mt-6 max-w-2xl w-full rounded-xl border border-rose-200 bg-rose-50 p-4">
+                    <div className="flex items-center gap-3 text-rose-600 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
                         </svg>
                         {error}
                     </div>
-                </DGCard>
+                </div>
             )}
         </div>
     );

@@ -21,14 +21,14 @@ export function DGButton({
   const baseClasses = cn(
     'inline-flex items-center justify-center gap-2 rounded-full font-bold transition-all duration-200',
     'disabled:opacity-50 disabled:cursor-not-allowed',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900'
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
   );
 
   const variantClasses = {
-    primary: 'bg-cyan-400 text-slate-900 hover:bg-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.25)] hover:shadow-[0_0_30px_rgba(34,211,238,0.35)]',
-    secondary: 'bg-transparent border border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10',
-    ghost: 'bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white',
-    danger: 'bg-rose-500 text-white hover:bg-rose-400',
+    primary: 'bg-orange-500 text-white hover:bg-orange-600 shadow-sm hover:shadow-md',
+    secondary: 'bg-transparent border border-orange-500 text-orange-500 hover:bg-orange-50',
+    ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+    danger: 'bg-rose-500 text-white hover:bg-rose-600',
   };
 
   const sizeClasses = {

@@ -13,10 +13,10 @@ export function DGBadge({
   className,
 }: DGBadgeProps) {
   const variantClasses = {
-    default: 'bg-slate-700/50 text-slate-300',
-    success: 'bg-emerald-400/10 text-emerald-400',
-    warning: 'bg-amber-400/10 text-amber-400',
-    danger: 'bg-rose-500/10 text-rose-500',
+    default: 'bg-slate-100 text-slate-600',
+    success: 'bg-emerald-50 text-emerald-700',
+    warning: 'bg-amber-50 text-amber-700',
+    danger: 'bg-rose-50 text-rose-600',
   };
 
   return (
