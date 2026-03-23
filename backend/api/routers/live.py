@@ -1,23 +1,14 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from backend.orchestrator.session import session_manager
 from backend.orchestrator.loop import OrchestratorLoop
 from backend.challenges.personas import ChallengerRegistry
-from backend.services.auth import decode_token
 
 router = APIRouter(prefix="/live", tags=["live"])
 
 orchestrator = OrchestratorLoop(session_manager)
 
 @router.websocket("/ws")
-async def websocket_endpoint(
-    websocket: WebSocket,
-    token: str | None = Query(default=None)
-) -> None:
-    # P1-6: Validate auth token before accepting the WebSocket connection
-    if not token or not decode_token(token):
-        await websocket.close(code=4401)
-        return
-
+async def websocket_endpoint(websocket: WebSocket) -> None:
     await websocket.accept()
     session_id: str | None = None
     try:

@@ -40,10 +40,7 @@ class LiveClient {
             return;
         }
 
-        // Attach auth token as query parameter — WebSocket API doesn't support headers
-        const token = localStorage.getItem('token');
-        const url = token ? `${this.url}?token=${encodeURIComponent(token)}` : this.url;
-        this.ws = new WebSocket(url);
+        this.ws = new WebSocket(this.url);
 
         this.ws.onopen = () => {
             console.log('Connected to Live Session');
