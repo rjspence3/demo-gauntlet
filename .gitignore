@@ -18,6 +18,22 @@ data/*
 *.pdf
 !scripts/*.pdf
 
+# Databases
+*.db
+*.sqlite3
+
+# Audit outputs (local only)
+audit/
+AUDIT_*.md
+
+# DSPy optimization outputs
+backend/dspy_optimization/*.json
+
+# Internal docs (local only)
+DECISIONS.md
+MIGRATION-NOTES.md
+SUMMARY.md
+
 # Build
 *.egg-info/
 dist/

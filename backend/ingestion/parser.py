@@ -1,11 +1,14 @@
 """
 Module for parsing PDF and PPTX files into slides.
 """
+import logging
 import os
 from typing import List, Tuple, Dict, Any
 import pdfplumber
 from pptx import Presentation
 from backend.models.core import Slide
+
+logger = logging.getLogger(__name__)
 
 def extract_from_file(file_path: str) -> Tuple[List[Slide], Dict[str, Any]]:
     """
@@ -29,7 +32,7 @@ def extract_from_file(file_path: str) -> Tuple[List[Slide], Dict[str, Any]]:
         # Check for low text density (OCR trigger)
         total_text = sum([len(s.text) for s in slides])
         if total_text < 100 and len(slides) > 0: # Heuristic: <100 chars total for the deck?
-             print("Low text density detected. Attempting OCR...")
+             logger.info("Low text density detected. Attempting OCR...")
              ocr_slides = _extract_with_ocr(file_path)
              if ocr_slides:
                  return ocr_slides, metadata
@@ -39,7 +42,7 @@ def extract_from_file(file_path: str) -> Tuple[List[Slide], Dict[str, Any]]:
         try:
             return _extract_from_pptx(file_path)
         except Exception as e:
-            print(f"PPTX extraction failed: {e}. Attempting PDF conversion fallback (not fully implemented) or OCR if possible.")
+            logger.warning(f"PPTX extraction failed: {e}. Attempting PDF conversion fallback (not fully implemented) or OCR if possible.")
             # Fallback: If we could convert PPTX to PDF here, we would. 
             # For now, just re-raise or return empty.
             raise e
@@ -131,7 +134,7 @@ def _extract_with_ocr(file_path: str) -> List[Slide]:
     except ImportError:
         # If dependencies are missing, return empty or raise
         # For MVP, we'll just log and return empty to avoid crashing if env is partial
-        print("OCR dependencies missing (pdf2image or pytesseract). Skipping OCR.")
+        logger.warning("OCR dependencies missing (pdf2image or pytesseract). Skipping OCR.")
         return []
 
     slides = []
@@ -142,7 +145,7 @@ def _extract_with_ocr(file_path: str) -> List[Slide]:
             title = f"Slide {i + 1} (OCR)"
             slides.append(Slide(index=i, title=title, text=text))
     except Exception as e:
-        print(f"OCR failed: {e}")
+        logger.error(f"OCR failed: {e}")
         return []
 
     return slides

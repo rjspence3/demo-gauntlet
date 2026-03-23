@@ -7,19 +7,25 @@ import { LiveSessionMode } from './components/LiveSessionMode';
 import { DemoRoom } from './components/DemoRoom';
 import { SummaryView } from './components/SummaryView';
 import { uploadDeck, getSessionStatus, generateResearch, listPersonas, precomputeChallenges } from './api/client';
-import { Swords, BarChart, Zap, Users, Loader2 } from 'lucide-react';
-import { DGLayoutShell, DGIconButton } from './components/ui';
+import { Swords, BarChart, Zap, Users, Loader2, AlertCircle } from 'lucide-react';
+import { DGLayoutShell, DGIconButton, DGCard } from './components/ui';
 
 type View = 'upload' | 'research' | 'selection' | 'challenge' | 'live' | 'summary';
 
 function App() {
     const [view, setView] = useState<View>('upload');
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState<string | null>(() => {
+        // Restore session on page refresh so the user doesn't lose progress
+        return localStorage.getItem('dg_session_id');
+    });
     const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
     const [processingStep, setProcessingStep] = useState<ProcessingStep>('uploading');
     const [challengers, setChallengers] = useState<Challenger[]>([]);
     const [personasLoading, setPersonasLoading] = useState(true);
     const [personasError, setPersonasError] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [processingError, setProcessingError] = useState<string | null>(null);
+    const [startError, setStartError] = useState<string | null>(null);
 
     // Load personas once on mount — no auth required
     useEffect(() => {
@@ -46,6 +52,7 @@ function App() {
         if (view !== 'research' || !sessionId) return;
 
         setProcessingStep('uploading');
+        setProcessingError(null);
         let stopped = false;
 
         const run = async () => {
@@ -57,7 +64,7 @@ function App() {
                     const statusRes = await getSessionStatus(sessionId);
                     if (statusRes.status === 'completed') break;
                     if (statusRes.status === 'failed') {
-                        alert("Processing failed. Please try again.");
+                        setProcessingError("Processing failed. Please try uploading again.");
                         setView('upload');
                         return;
                     }
@@ -86,32 +93,39 @@ function App() {
     }, [view, sessionId]);
 
     const handleNewSession = () => {
+        localStorage.removeItem('dg_session_id');
         setSessionId(null);
         setSelectedPersonaIds([]);
+        setUploadError(null);
+        setProcessingError(null);
+        setStartError(null);
         setView('upload');
     };
 
     const handleUploadComplete = async (file: File) => {
         try {
+            setUploadError(null);
             setProcessingStep('uploading');
             const res = await uploadDeck(file);
+            localStorage.setItem('dg_session_id', res.session_id);
             setSessionId(res.session_id);
             setView('research');
         } catch (err) {
             console.error("Upload failed", err);
-            alert("Upload failed. Please check console.");
+            setUploadError("Upload failed. Please check your connection and try again.");
         }
     };
 
     const handleStartSimulation = async (selectedIds: string[]) => {
         try {
+            setStartError(null);
             if (!sessionId) return;
             await precomputeChallenges(sessionId, selectedIds);
             setSelectedPersonaIds(selectedIds);
             setView('challenge');
         } catch (err) {
             console.error("Failed to start simulation:", err);
-            alert("Failed to generate challenges.");
+            setStartError("Failed to generate challenges. Please try again.");
         }
     };
 
@@ -120,7 +134,7 @@ function App() {
             <DGLayoutShell>
                 <div className="min-h-screen flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
+                        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
                         <p className="text-slate-400 text-sm font-mono animate-pulse">Initializing...</p>
                     </div>
                 </div>
@@ -131,24 +145,21 @@ function App() {
     return (
         <DGLayoutShell>
             {/* Navigation / Header */}
-            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
                     <button
                         className="flex items-center space-x-2 sm:space-x-3 group"
                         onClick={handleNewSession}
                     >
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-cyan-400 blur-md opacity-20 group-hover:opacity-50 transition-opacity"></div>
-                            <Swords className="w-6 sm:w-8 h-6 sm:h-8 text-cyan-400 relative z-10" />
-                        </div>
-                        <span className="font-bold text-xl sm:text-2xl tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                            Demo Gauntlet
+                        <Swords className="w-6 sm:w-8 h-6 sm:h-8 text-orange-500" />
+                        <span className="font-bold text-xl sm:text-2xl tracking-tight text-slate-900">
+                            Demo <span className="text-orange-500">Gauntlet</span>
                         </span>
                     </button>
 
                     <div className="flex items-center space-x-2 sm:space-x-4">
                         {sessionId && (
-                            <div className="flex items-center space-x-1 sm:space-x-2 bg-slate-800/50 rounded-full p-1 sm:p-1.5 border border-slate-700 backdrop-blur-sm">
+                            <div className="flex items-center space-x-1 sm:space-x-2 bg-slate-50 rounded-full p-1 sm:p-1.5 border border-slate-200">
                                 <DGIconButton
                                     icon={<Users className="w-4 sm:w-5 h-4 sm:h-5" />}
                                     ariaLabel="Challenger selection"
@@ -201,6 +212,32 @@ function App() {
 
             {/* Main Content */}
             <main className="container mx-auto px-4 pt-24 sm:pt-32 pb-12 relative z-10">
+                {/* Error banners */}
+                {uploadError && (
+                    <DGCard className="mb-4 max-w-2xl mx-auto p-4 border-rose-200 bg-rose-50">
+                        <div className="flex items-center gap-3 text-rose-700 text-sm">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            {uploadError}
+                        </div>
+                    </DGCard>
+                )}
+                {processingError && (
+                    <DGCard className="mb-4 max-w-2xl mx-auto p-4 border-rose-200 bg-rose-50">
+                        <div className="flex items-center gap-3 text-rose-700 text-sm">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            {processingError}
+                        </div>
+                    </DGCard>
+                )}
+                {startError && (
+                    <DGCard className="mb-4 max-w-2xl mx-auto p-4 border-rose-200 bg-rose-50">
+                        <div className="flex items-center gap-3 text-rose-700 text-sm">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            {startError}
+                        </div>
+                    </DGCard>
+                )}
+
                 {view === 'upload' && (
                     <DeckUpload onUploadComplete={handleUploadComplete} />
                 )}
@@ -238,14 +275,14 @@ function App() {
                 )}
             </main>
 
-            <footer className="border-t border-slate-800 py-4 px-6 text-center">
-                <p className="text-xs text-slate-500">
+            <footer className="border-t border-slate-200 bg-white py-4 px-6 text-center">
+                <p className="text-xs text-slate-400">
                     Demo Gauntlet &middot; Built by{" "}
                     <a
                         href="https://nomouthlabs.com"
-                        className="underline hover:text-slate-300 transition-colors"
+                        className="underline hover:text-slate-600 transition-colors"
                     >
-                        Rob Spencer
+                        Rob Spence
                     </a>
                     {" "}&middot; nomouthlabs.com
                 </p>

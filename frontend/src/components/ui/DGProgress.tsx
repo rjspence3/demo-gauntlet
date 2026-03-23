@@ -15,9 +15,9 @@ export function DGProgress({
   className,
 }: DGProgressProps) {
   const variantClasses = {
-    default: 'bg-cyan-400',
-    success: 'bg-emerald-400',
-    warning: 'bg-amber-400',
+    default: 'bg-orange-500',
+    success: 'bg-emerald-500',
+    warning: 'bg-amber-500',
     danger: 'bg-rose-500',
   };
 
@@ -29,7 +29,7 @@ export function DGProgress({
   return (
     <div
       className={cn(
-        'w-full bg-slate-800 rounded-full overflow-hidden',
+        'w-full bg-slate-100 rounded-full overflow-hidden',
         sizeClasses[size],
         className
       )}

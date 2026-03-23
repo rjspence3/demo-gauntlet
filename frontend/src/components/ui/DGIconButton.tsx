@@ -21,7 +21,7 @@ export function DGIconButton({
 }: DGIconButtonProps) {
   const baseClasses = cn(
     'inline-flex items-center justify-center rounded-full transition-colors',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
     'disabled:opacity-40 disabled:cursor-not-allowed'
   );
 
@@ -31,9 +31,9 @@ export function DGIconButton({
   };
 
   const variantClasses = {
-    default: 'text-slate-400 hover:text-white hover:bg-slate-800',
-    active: 'text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20',
-    danger: 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10',
+    default: 'text-slate-500 hover:text-slate-900 hover:bg-slate-100',
+    active: 'text-orange-500 bg-orange-50 hover:bg-orange-100',
+    danger: 'text-rose-500 hover:text-rose-600 hover:bg-rose-50',
   };
 
   const button = (

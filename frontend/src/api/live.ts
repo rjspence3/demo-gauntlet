@@ -43,7 +43,6 @@ class LiveClient {
         this.ws = new WebSocket(this.url);
 
         this.ws.onopen = () => {
-            console.log('Connected to Live Session');
             this.reconnectAttempts = 0;
             this.processQueue();
         };
@@ -58,7 +57,6 @@ class LiveClient {
         };
 
         this.ws.onclose = () => {
-            console.log('Disconnected from Live Session');
             this.ws = null;
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
                 setTimeout(() => {
