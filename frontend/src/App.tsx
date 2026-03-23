@@ -14,7 +14,10 @@ type View = 'upload' | 'research' | 'selection' | 'challenge' | 'live' | 'summar
 
 function App() {
     const [view, setView] = useState<View>('upload');
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState<string | null>(() => {
+        // Restore session on page refresh so the user doesn't lose progress
+        return localStorage.getItem('dg_session_id');
+    });
     const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
     const [processingStep, setProcessingStep] = useState<ProcessingStep>('uploading');
     const [challengers, setChallengers] = useState<Challenger[]>([]);
@@ -90,6 +93,7 @@ function App() {
     }, [view, sessionId]);
 
     const handleNewSession = () => {
+        localStorage.removeItem('dg_session_id');
         setSessionId(null);
         setSelectedPersonaIds([]);
         setUploadError(null);
@@ -103,6 +107,7 @@ function App() {
             setUploadError(null);
             setProcessingStep('uploading');
             const res = await uploadDeck(file);
+            localStorage.setItem('dg_session_id', res.session_id);
             setSessionId(res.session_id);
             setView('research');
         } catch (err) {
