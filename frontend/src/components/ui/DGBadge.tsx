@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface DGBadgeProps {
-  variant?: 'default' | 'success' | 'warning' | 'danger';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'ai';
   children: React.ReactNode;
   className?: string;
 }
@@ -13,16 +13,17 @@ export function DGBadge({
   className,
 }: DGBadgeProps) {
   const variantClasses = {
-    default: 'bg-surface-overlay text-text-secondary border border-border',
+    default: 'bg-white/60 text-text-secondary border border-border',
     success: 'bg-status-success/10 text-status-success border border-status-success/20',
     warning: 'bg-status-warning/10 text-status-warning border border-status-warning/20',
     danger: 'bg-status-error/10 text-status-error border border-status-error/20',
+    ai: 'bg-ai-50 text-ai-600 border border-ai-200',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium',
+        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
         variantClasses[variant],
         className
       )}

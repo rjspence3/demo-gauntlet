@@ -60,28 +60,30 @@ export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-3xl mx-auto px-6">
-            {/* Hero */}
-            <div className="text-center mb-12">
-                <p className="text-xs font-medium text-brand-500 uppercase tracking-widest mb-4">
-                    Sales Deck Analyzer
-                </p>
-                <h1 className="text-4xl sm:text-5xl font-semibold text-text-primary mb-4 tracking-tight leading-[1.1]">
+        <div className="flex flex-col items-center justify-center min-h-[75vh] w-full max-w-3xl mx-auto px-6">
+            {/* Hero — Pitch energy: big, confident, centered */}
+            <div className="text-center mb-14">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-ai-50 border border-ai-200 mb-6">
+                    <div className="w-1.5 h-1.5 rounded-full bg-ai-500 animate-soft-pulse" />
+                    <span className="text-xs font-medium text-ai-600 tracking-wide">AI-Powered Analysis</span>
+                </div>
+                <h1 className="text-5xl sm:text-6xl font-bold text-text-primary mb-5 tracking-tight leading-[1.05]">
                     Stress-Test Your Demo
                 </h1>
-                <p className="text-base sm:text-lg text-text-muted max-w-lg mx-auto leading-relaxed">
+                <p className="text-lg sm:text-xl text-text-muted max-w-lg mx-auto leading-relaxed">
                     Upload a sales deck. Face your toughest challenger.
                 </p>
             </div>
 
-            {/* Drop zone */}
+            {/* Drop zone — glassmorphism card */}
             <div
                 className={[
-                    'w-full max-w-xl rounded-xl border border-dashed transition-all duration-200',
-                    'flex flex-col items-center justify-center cursor-pointer py-14 px-8',
+                    'w-full max-w-xl rounded-2xl border-2 border-dashed transition-all duration-200',
+                    'flex flex-col items-center justify-center cursor-pointer py-16 px-8',
+                    'backdrop-blur-sm',
                     isDragging
-                        ? 'border-brand-500 bg-brand-500/5'
-                        : 'border-border-hover hover:border-brand-500/50 bg-surface',
+                        ? 'border-ai-400 bg-ai-50/60 shadow-ai-glow'
+                        : 'border-ai-200 hover:border-ai-300 bg-white/70 hover:bg-white/80',
                     isUploading ? 'pointer-events-none opacity-60' : '',
                 ].join(' ')}
                 onDragOver={handleDragOver}
@@ -91,24 +93,26 @@ export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
             >
                 <div className="text-center">
                     <div className={[
-                        'w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-5 transition-colors',
-                        isDragging ? 'bg-brand-500/10 text-brand-500' : 'bg-surface-overlay text-text-faint',
+                        'w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-all',
+                        isDragging
+                            ? 'bg-ai-100 text-ai-500 shadow-ai-glow'
+                            : 'bg-ai-50 text-ai-400',
                     ].join(' ')}>
                         {isUploading
-                            ? <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+                            ? <Loader2 className="w-6 h-6 animate-spin text-ai-500" />
                             : <Upload className="w-6 h-6" />
                         }
                     </div>
 
-                    <p className="text-sm font-medium text-text-primary mb-1">
+                    <p className="text-base font-semibold text-text-primary mb-1.5">
                         {isUploading ? 'Uploading...' : 'Drag & drop your deck here'}
                     </p>
-                    <p className="text-text-faint text-xs mb-6">
+                    <p className="text-text-faint text-sm mb-7">
                         PDF, PPTX, or PPT
                     </p>
 
                     {!isUploading && (
-                        <DGButton variant="primary" size="sm" className="pointer-events-none">
+                        <DGButton variant="primary" size="md" className="pointer-events-none">
                             Browse Files
                             <ArrowRight className="w-3.5 h-3.5 ml-1" />
                         </DGButton>
@@ -125,7 +129,7 @@ export const DeckUpload: React.FC<DeckUploadProps> = ({ onUploadComplete }) => {
             </div>
 
             {error && (
-                <div className="mt-4 max-w-xl w-full rounded-lg border border-status-error/20 bg-status-error/5 px-4 py-3">
+                <div className="mt-5 max-w-xl w-full rounded-xl border border-status-error/20 bg-status-error/5 px-4 py-3">
                     <p className="text-status-error text-sm">{error}</p>
                 </div>
             )}

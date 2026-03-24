@@ -115,8 +115,8 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-8 h-8 text-brand-500 animate-spin mb-3" />
-                <p className="text-text-muted text-sm animate-pulse">Loading simulation...</p>
+                <Loader2 className="w-8 h-8 text-ai-500 animate-spin mb-3" />
+                <p className="text-text-muted text-sm animate-soft-pulse">Loading simulation...</p>
             </div>
         );
     }
@@ -167,17 +167,17 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                                     <div
                                         key={p.id}
                                         className={cn(
-                                            "w-2 h-2 rounded-full transition-all",
+                                            "w-2.5 h-2.5 rounded-full transition-all",
                                             activePersona?.id === p.id
-                                                ? "bg-brand-500 ring-2 ring-brand-500/20"
-                                                : "bg-text-faint"
+                                                ? "bg-ai-500 ring-2 ring-ai-500/20"
+                                                : "bg-text-faint/40"
                                         )}
                                         title={p.name}
                                     />
                                 ))}
                             </div>
                             {activePersona && (
-                                <span className="text-sm font-medium text-text-primary">
+                                <span className="text-sm font-semibold text-text-primary">
                                     {activePersona.name}
                                 </span>
                             )}
@@ -193,7 +193,7 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                                 <ArrowRight className="w-3 h-3 ml-1" />
                             </DGButton>
                             <div className="hidden sm:flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-status-success animate-soft-pulse" />
                                 <span className="text-[10px] text-text-faint font-mono uppercase tracking-wider">Live</span>
                             </div>
                         </div>
@@ -205,16 +205,17 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                         {activeChallenge ? (
                             <div className="animate-fade-in mb-auto">
                                 <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center">
-                                        <MessageSquare className="w-3.5 h-3.5 text-brand-500" />
+                                    <div className="w-7 h-7 rounded-lg bg-ai-50 flex items-center justify-center">
+                                        <MessageSquare className="w-3.5 h-3.5 text-ai-500" />
                                     </div>
-                                    <span className="text-xs font-medium text-text-muted">
+                                    <span className="text-xs font-medium text-ai-500 uppercase tracking-wide">
                                         {activePersona?.role || 'Challenger'}
                                     </span>
                                 </div>
 
                                 <div className="relative group">
-                                    <div className="bg-surface-overlay border border-border rounded-lg p-4">
+                                    {/* Challenger message — indigo left border accent */}
+                                    <div className="bg-ai-50/40 border border-ai-200/50 border-l-2 border-l-ai-400 rounded-xl p-4">
                                         <p className="text-sm sm:text-base text-text-primary leading-relaxed">
                                             {activeChallenge.question}
                                         </p>
@@ -233,7 +234,7 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                         ) : isGenerating ? (
                             <div className="flex-grow flex items-center justify-center">
                                 <div className="flex items-center gap-2 text-text-muted">
-                                    <Loader2 className="w-4 h-4 animate-spin text-brand-500" />
+                                    <Loader2 className="w-4 h-4 animate-spin text-ai-500" />
                                     <span className="text-sm">Analyzing slide...</span>
                                 </div>
                             </div>
@@ -250,7 +251,7 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                         {scoreResult && userResponse && (
                             <div className="flex justify-end mb-3 animate-fade-in">
                                 <div className="max-w-[85%]">
-                                    <div className="bg-surface-overlay rounded-lg rounded-tr-sm px-3 py-2.5">
+                                    <div className="bg-white/60 border border-border rounded-xl rounded-tr-sm px-3 py-2.5">
                                         <p className="text-text-secondary text-sm leading-relaxed">{userResponse}</p>
                                     </div>
                                     <span className="text-[10px] text-text-faint mt-1 block text-right">Your answer</span>
@@ -261,7 +262,7 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                         {/* Score Result */}
                         {scoreResult && (
                             <div className={cn(
-                                "animate-slide-up rounded-lg border p-4",
+                                "animate-slide-up rounded-xl border p-4",
                                 scoreResult.score >= 70
                                     ? "border-status-success/20 bg-status-success/5"
                                     : "border-status-warning/20 bg-status-warning/5"
@@ -300,7 +301,7 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                                 onChange={(e) => setUserResponse(e.target.value)}
                                 placeholder={activeChallenge && !scoreResult ? "Type your response... (Enter to submit)" : "Waiting for challenge..."}
                                 disabled={!activeChallenge || !!scoreResult || isSubmitting}
-                                className="w-full resize-none bg-surface-elevated border border-border rounded-lg py-3 px-3 pr-12 text-text-primary placeholder-text-faint focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-all disabled:opacity-50 text-sm"
+                                className="w-full resize-none bg-white/80 backdrop-blur-sm border border-border-ai rounded-xl py-3 px-3 pr-12 text-text-primary placeholder-text-faint focus:outline-none focus:border-ai-400 focus:ring-2 focus:ring-ai-500/20 transition-all disabled:opacity-50 text-sm"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();

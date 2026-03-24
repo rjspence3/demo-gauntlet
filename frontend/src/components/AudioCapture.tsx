@@ -8,14 +8,15 @@ interface AudioCaptureProps {
 
 declare global {
     interface Window {
-        SpeechRecognition: any;
-        webkitSpeechRecognition: any;
+        SpeechRecognition: unknown;
+        webkitSpeechRecognition: unknown;
     }
 }
 
 export const AudioCapture: React.FC<AudioCaptureProps> = ({ onTranscript }) => {
     const [isListening, setIsListening] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [recognition, setRecognition] = useState<any>(null);
 
     useEffect(() => {
@@ -25,11 +26,13 @@ export const AudioCapture: React.FC<AudioCaptureProps> = ({ onTranscript }) => {
             return;
         }
 
-        const recognitionInstance = new SpeechRecognition();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const recognitionInstance = new (SpeechRecognition as any)();
         recognitionInstance.continuous = true;
         recognitionInstance.interimResults = true;
         recognitionInstance.lang = 'en-US';
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recognitionInstance.onresult = (event: any) => {
             let finalTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -43,6 +46,7 @@ export const AudioCapture: React.FC<AudioCaptureProps> = ({ onTranscript }) => {
             }
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recognitionInstance.onerror = (event: any) => {
             console.error('Speech recognition error', event.error);
             if (event.error === 'not-allowed') {
@@ -78,22 +82,22 @@ export const AudioCapture: React.FC<AudioCaptureProps> = ({ onTranscript }) => {
     }, [recognition, isListening]);
 
     return (
-        <div className="flex flex-col items-center gap-3 p-4 border border-border rounded-lg bg-surface">
+        <div className="flex flex-col items-center gap-3 p-5 border border-border-ai rounded-2xl bg-white/80 backdrop-blur-sm">
             <div className="flex items-center gap-4">
                 <button
                     onClick={toggleListening}
                     className={[
-                        'p-4 rounded-xl transition-all',
+                        'p-4 rounded-2xl transition-all',
                         isListening
-                            ? 'bg-status-error/10 text-status-error hover:bg-status-error/20 animate-pulse'
-                            : 'bg-brand-500/10 text-brand-500 hover:bg-brand-500/20'
+                            ? 'bg-status-error/10 text-status-error hover:bg-status-error/20 animate-soft-pulse'
+                            : 'bg-ai-50 text-ai-500 hover:bg-ai-100'
                     ].join(' ')}
                 >
                     {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                 </button>
 
                 <div className="flex flex-col">
-                    <span className="font-medium text-sm text-text-primary">
+                    <span className="font-semibold text-sm text-text-primary">
                         {isListening ? 'Listening...' : 'Microphone Off'}
                     </span>
                     <span className="text-xs text-text-faint">

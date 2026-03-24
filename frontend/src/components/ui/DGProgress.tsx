@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 
 export interface DGProgressProps {
   value: number;
-  variant?: 'default' | 'success' | 'warning' | 'danger';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'ai';
   size?: 'sm' | 'md';
   className?: string;
 }
@@ -19,6 +19,7 @@ export function DGProgress({
     success: 'bg-status-success',
     warning: 'bg-status-warning',
     danger: 'bg-status-error',
+    ai: 'bg-gradient-to-r from-ai-500 to-ai-400',
   };
 
   const sizeClasses = {
@@ -29,7 +30,7 @@ export function DGProgress({
   return (
     <div
       className={cn(
-        'w-full bg-surface-overlay rounded-full overflow-hidden',
+        'w-full bg-black/5 rounded-full overflow-hidden',
         sizeClasses[size],
         className
       )}

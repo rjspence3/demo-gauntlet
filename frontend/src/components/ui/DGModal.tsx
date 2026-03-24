@@ -32,12 +32,12 @@ export function DGModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative z-10 flex flex-col max-h-[90vh] bg-surface-elevated border border-border rounded-xl',
+          'relative z-10 flex flex-col max-h-[90vh] bg-white/95 backdrop-blur-md border border-border-ai rounded-2xl shadow-glass-hover',
           sizeClasses[size]
         )}
       >

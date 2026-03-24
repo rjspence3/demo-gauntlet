@@ -19,20 +19,20 @@ export function DGButton({
   ...props
 }: DGButtonProps) {
   const baseClasses = cn(
-    'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 rounded-lg',
+    'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 rounded-xl',
     'disabled:opacity-40 disabled:cursor-not-allowed',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-page'
   );
 
   const variantClasses = {
-    primary: 'bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700',
-    secondary: 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50',
-    ghost: 'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-900',
+    primary: 'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-sm hover:shadow-md',
+    secondary: 'bg-white/80 backdrop-blur-sm border border-border-ai text-text-secondary hover:bg-white hover:border-ai-300 hover:text-text-primary',
+    ghost: 'bg-transparent text-text-muted hover:bg-ai-50 hover:text-ai-600',
     danger: 'bg-status-error/10 text-status-error border border-status-error/20 hover:bg-status-error/20',
   };
 
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-xs',
+    sm: 'px-3.5 py-1.5 text-xs',
     md: 'px-5 py-2.5 text-sm',
     lg: 'px-7 py-3 text-sm',
   };

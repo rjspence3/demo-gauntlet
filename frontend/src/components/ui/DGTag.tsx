@@ -13,14 +13,14 @@ export function DGTag({
   className,
 }: DGTagProps) {
   const variantClasses = {
-    default: 'bg-surface-overlay text-text-muted border border-border',
-    accent: 'bg-brand-500/10 text-brand-400 border border-brand-500/20',
+    default: 'bg-white/60 text-text-muted border border-border',
+    accent: 'bg-ai-50 text-ai-700 border border-ai-100',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium',
+        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
         variantClasses[variant],
         className
       )}

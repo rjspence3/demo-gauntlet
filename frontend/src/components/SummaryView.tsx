@@ -30,7 +30,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
+                <Loader2 className="w-6 h-6 text-ai-500 animate-spin" />
             </div>
         );
     }
@@ -79,20 +79,21 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
 
     return (
         <div className="max-w-4xl mx-auto animate-fade-in pb-20 px-4 sm:px-6">
+            {/* Header — Pitch confidence */}
             <div className="text-center mb-10">
-                <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-2">Session Report</h2>
+                <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2 tracking-tight">Session Report</h2>
                 <p className="text-text-muted text-sm">Performance analysis and readiness assessment</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
-                {/* Overall Score Card */}
-                <DGCard className="lg:col-span-1 p-6 flex flex-col items-center justify-center relative overflow-hidden min-h-[240px] border-brand-500/20">
+                {/* Overall Score Card — glassmorphism with ai accent */}
+                <DGCard className="lg:col-span-1 p-6 flex flex-col items-center justify-center relative overflow-hidden min-h-[240px] border-ai-300/30">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
-                        <Trophy className="w-20 h-20 text-brand-500" />
+                        <Trophy className="w-20 h-20 text-ai-500" />
                     </div>
                     <div className="relative z-10 text-center">
-                        <div className="text-6xl font-bold text-text-primary mb-1">{grade}</div>
-                        <div className="text-brand-500 text-xs font-mono mb-5 uppercase tracking-widest">Rank</div>
+                        <div className="text-6xl font-extrabold text-text-primary mb-1">{grade}</div>
+                        <div className="text-ai-500 text-xs font-mono mb-5 uppercase tracking-widest">Rank</div>
                         <div className="text-4xl font-bold text-text-primary mb-1 tabular-nums">{report.overall_score}</div>
                         <div className="text-[10px] text-text-faint uppercase tracking-widest">Overall Score</div>
                     </div>
@@ -102,7 +103,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
                 <div className="lg:col-span-2 flex flex-col gap-4">
                     <div className="grid grid-cols-2 gap-4">
                         <DGCard className="p-5 flex flex-col justify-center items-center">
-                            <Target className="w-5 h-5 text-accent-purple mb-2" />
+                            <Target className="w-5 h-5 text-ai-500 mb-2" />
                             <div className="text-2xl font-bold text-text-primary tabular-nums">{report.total_challenges}</div>
                             <div className="text-[10px] text-text-faint uppercase tracking-wider text-center">Challenges</div>
                         </DGCard>
@@ -115,12 +116,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
                         </DGCard>
                     </div>
 
+                    {/* Strengths / Weaknesses — glassmorphism cards with accent borders */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                        {/* Strengths */}
                         <DGCard className="p-4 border-l-2 border-l-status-success">
                             <h3 className="text-xs font-semibold text-status-success uppercase mb-3 flex items-center tracking-wider">
                                 <Star className="w-3.5 h-3.5 mr-1.5" />
-                                Strengths
+                                What Landed
                             </h3>
                             <div className="space-y-2">
                                 {report.strengths?.length > 0 ? (
@@ -136,17 +137,16 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
                             </div>
                         </DGCard>
 
-                        {/* Weaknesses */}
-                        <DGCard className="p-4 border-l-2 border-l-status-error">
-                            <h3 className="text-xs font-semibold text-status-error uppercase mb-3 flex items-center tracking-wider">
+                        <DGCard className="p-4 border-l-2 border-l-brand-500">
+                            <h3 className="text-xs font-semibold text-brand-500 uppercase mb-3 flex items-center tracking-wider">
                                 <TrendingDown className="w-3.5 h-3.5 mr-1.5" />
-                                Improve
+                                What to Sharpen
                             </h3>
                             <div className="space-y-2">
                                 {report.weaknesses?.length > 0 ? (
                                     report.weaknesses.map((w, i) => (
                                         <div key={i} className="flex items-start gap-2">
-                                            <div className="w-1 h-1 rounded-full bg-status-error mt-2 flex-shrink-0" />
+                                            <div className="w-1 h-1 rounded-full bg-brand-500 mt-2 flex-shrink-0" />
                                             <span className="text-text-secondary text-sm leading-relaxed">{w}</span>
                                         </div>
                                     ))
@@ -160,17 +160,17 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
             </div>
 
             {/* Persona Breakdown */}
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
-                <span className="w-0.5 h-5 bg-brand-500 mr-3 rounded-full" />
+            <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center tracking-tight">
+                <span className="w-1 h-5 bg-gradient-to-b from-ai-500 to-ai-400 mr-3 rounded-full" />
                 Persona Breakdown
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">
                 {report.persona_breakdown?.length > 0 ? (
                     report.persona_breakdown.map((p) => (
-                        <DGCard key={p.persona_id} className="p-4 hover:border-border-hover transition-colors group">
+                        <DGCard key={p.persona_id} className="p-4 hover:shadow-glass-hover transition-all group">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h4 className="font-medium text-text-primary text-sm group-hover:text-brand-400 transition-colors">
+                                    <h4 className="font-semibold text-text-primary text-sm group-hover:text-ai-600 transition-colors">
                                         {formatPersonaName(p.persona_id)}
                                     </h4>
                                     <p className="text-xs text-text-faint mt-0.5">{p.total_challenges} interactions</p>
@@ -218,8 +218,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
             </div>
 
             {/* Slide Breakdown */}
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
-                <span className="w-0.5 h-5 bg-accent-purple mr-3 rounded-full" />
+            <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center tracking-tight">
+                <span className="w-1 h-5 bg-gradient-to-b from-ai-500 to-ai-400 mr-3 rounded-full" />
                 Slide Performance
             </h3>
             <DGCard className="p-4 mb-10">
@@ -227,9 +227,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ sessionId, onRestart }
                     {report.slide_breakdown && Object.entries(report.slide_breakdown).map(([index, score]) => (
                         <div
                             key={index}
-                            className="flex items-center justify-between p-3 rounded-lg bg-surface-elevated gap-3"
+                            className="flex items-center justify-between p-3 rounded-xl bg-white/40 border border-border gap-3"
                         >
-                            <span className="text-text-primary text-sm font-medium">Slide {parseInt(index) + 1}</span>
+                            <span className="text-text-primary text-sm font-semibold">Slide {parseInt(index) + 1}</span>
                             <div className="flex items-center gap-3">
                                 <span className={cn(
                                     "font-mono text-sm font-medium tabular-nums",

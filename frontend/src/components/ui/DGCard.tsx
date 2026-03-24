@@ -13,14 +13,14 @@ export function DGCard({
   ...props
 }: DGCardProps) {
   const variantClasses = {
-    default: 'bg-white border border-gray-200 shadow-sm',
-    elevated: 'bg-gray-50 border border-gray-200 shadow-sm',
-    bordered: 'bg-transparent border border-gray-200',
+    default: 'bg-white/85 backdrop-blur-sm border border-border-ai shadow-glass',
+    elevated: 'bg-white/90 backdrop-blur-md border border-border-ai shadow-glass-hover',
+    bordered: 'bg-transparent border border-border-ai',
   };
 
   return (
     <div
-      className={cn('rounded-xl', variantClasses[variant], className)}
+      className={cn('rounded-2xl', variantClasses[variant], className)}
       {...props}
     >
       {children}

@@ -6,7 +6,7 @@ export interface DGLayoutShellProps {
 
 export function DGLayoutShell({ children }: DGLayoutShellProps) {
   return (
-    <div className="min-h-screen bg-gray-50 text-text-primary font-sans flex flex-col">
+    <div className="min-h-screen bg-page text-text-primary font-sans flex flex-col">
       <div className="relative z-10 flex flex-col flex-1">
         {children}
       </div>

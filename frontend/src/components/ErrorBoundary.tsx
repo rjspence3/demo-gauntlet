@@ -33,18 +33,18 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+                <div className="min-h-screen bg-page flex items-center justify-center p-6">
                     <div className="max-w-sm w-full text-center">
-                        <div className="w-12 h-12 bg-status-error/10 rounded-xl flex items-center justify-center mx-auto mb-5">
-                            <AlertTriangle className="w-6 h-6 text-status-error" />
+                        <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <AlertTriangle className="w-7 h-7 text-brand-500" />
                         </div>
-                        <h1 className="text-lg font-semibold text-text-primary mb-2">Something went wrong</h1>
-                        <p className="text-text-muted text-sm mb-6">
+                        <h1 className="text-xl font-bold text-text-primary mb-2 tracking-tight">Something went wrong</h1>
+                        <p className="text-text-muted text-sm mb-8 leading-relaxed">
                             An unexpected error occurred. Start a new session to continue.
                         </p>
                         <button
                             onClick={this.handleReset}
-                            className="inline-flex items-center gap-2 bg-brand-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-brand-400 transition-colors"
+                            className="inline-flex items-center gap-2 bg-brand-500 text-white font-semibold text-sm px-6 py-3 rounded-xl hover:bg-brand-600 transition-all shadow-sm hover:shadow-md"
                         >
                             <RefreshCw className="w-4 h-4" />
                             Start Over

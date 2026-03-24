@@ -20,8 +20,8 @@ export function DGIconButton({
   ...props
 }: DGIconButtonProps) {
   const baseClasses = cn(
-    'inline-flex items-center justify-center rounded-lg transition-colors',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
+    'inline-flex items-center justify-center rounded-xl transition-all duration-150',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-page',
     'disabled:opacity-40 disabled:cursor-not-allowed'
   );
 
@@ -31,8 +31,8 @@ export function DGIconButton({
   };
 
   const variantClasses = {
-    default: 'text-text-muted hover:text-text-primary hover:bg-surface-elevated',
-    active: 'text-brand-500 bg-brand-500/10 hover:bg-brand-500/20',
+    default: 'text-text-muted hover:text-text-primary hover:bg-ai-50',
+    active: 'text-ai-500 bg-ai-50 hover:bg-ai-100',
     danger: 'text-status-error hover:text-status-error hover:bg-status-error/10',
   };
 
@@ -52,7 +52,7 @@ export function DGIconButton({
     return (
       <span className="relative group">
         {button}
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-text-primary bg-surface-overlay border border-border rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 text-xs font-medium text-text-primary bg-white border border-border-ai rounded-lg shadow-glass opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
           {tooltip}
         </span>
       </span>

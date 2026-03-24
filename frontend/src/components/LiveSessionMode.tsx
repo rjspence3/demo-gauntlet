@@ -43,7 +43,7 @@ export const LiveSessionMode: React.FC<LiveSessionModeProps> = ({ sessionId, sel
             <header className="flex justify-between items-center pb-4 border-b border-border">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
-                        <h1 className="text-xl font-semibold text-text-primary">
+                        <h1 className="text-xl font-bold text-text-primary tracking-tight">
                             Live Gauntlet
                         </h1>
                         <DGBadge variant="warning">Beta</DGBadge>
@@ -66,7 +66,7 @@ export const LiveSessionMode: React.FC<LiveSessionModeProps> = ({ sessionId, sel
                                 <p className="text-[10px] text-text-faint font-mono text-center mb-2 uppercase tracking-wider">Live Transcript</p>
                                 {transcriptHistory.map((t, i) => (
                                     <p key={i} className="text-text-secondary text-sm text-center animate-fade-in">
-                                        "{t}"
+                                        &ldquo;{t}&rdquo;
                                     </p>
                                 ))}
                                 {transcriptHistory.length === 0 && (
@@ -82,7 +82,7 @@ export const LiveSessionMode: React.FC<LiveSessionModeProps> = ({ sessionId, sel
                 {/* Agent Gallery */}
                 <DGCard className="flex flex-col gap-3 p-4">
                     <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                        <User className="w-4 h-4 text-text-muted" />
+                        <User className="w-4 h-4 text-ai-500" />
                         Audience
                     </h2>
 
@@ -109,13 +109,15 @@ const AgentCard: React.FC<{ agent: AgentState }> = ({ agent }) => {
     return (
         <div
             className={[
-                'p-3 rounded-lg border transition-all duration-300',
-                isRaised ? 'border-status-warning/30 bg-status-warning/5' : 'border-border bg-surface',
+                'p-3 rounded-xl border transition-all duration-300',
+                isRaised
+                    ? 'border-status-warning/30 bg-status-warning/5'
+                    : 'border-border-ai bg-white/60 backdrop-blur-sm',
             ].join(' ')}
         >
             <div className="flex items-start justify-between">
                 <div>
-                    <h3 className="font-medium text-sm text-text-primary">
+                    <h3 className="font-semibold text-sm text-text-primary">
                         {displayName}
                     </h3>
                     <span className="text-[10px] text-text-faint uppercase tracking-wider">
@@ -124,21 +126,21 @@ const AgentCard: React.FC<{ agent: AgentState }> = ({ agent }) => {
                 </div>
 
                 {isRaised && (
-                    <div className="animate-bounce bg-status-warning text-white p-1 rounded-md">
+                    <div className="animate-bounce bg-status-warning text-white p-1 rounded-lg">
                         <Hand className="w-4 h-4" />
                     </div>
                 )}
                 {isThinking && (
-                    <div className="w-2 h-2 rounded-full bg-text-faint animate-pulse" />
+                    <div className="w-2 h-2 rounded-full bg-ai-400 animate-soft-pulse" />
                 )}
             </div>
 
             {agent.message && (
                 <div className={[
-                    'mt-2 text-sm p-2.5 rounded-lg border',
+                    'mt-2 text-sm p-2.5 rounded-xl border',
                     isRaised
                         ? 'bg-status-warning/5 border-status-warning/20 text-text-secondary'
-                        : 'bg-surface-elevated border-border text-text-muted',
+                        : 'bg-white/40 border-border text-text-muted',
                 ].join(' ')}>
                     <div className="flex gap-2">
                         <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-50" />

@@ -21,10 +21,10 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
     onFinish,
 }) => {
     return (
-        <div className="flex flex-col h-full w-full overflow-hidden bg-surface border border-border rounded-xl">
+        <div className="flex flex-col h-full w-full overflow-hidden bg-white/85 backdrop-blur-sm border border-border-ai rounded-2xl shadow-glass">
             {/* Slide Header */}
-            <div className="px-4 py-3 border-b border-border flex justify-between items-center gap-2">
-                <h2 className="text-sm font-medium text-text-primary truncate flex-1">
+            <div className="px-5 py-3 border-b border-border flex justify-between items-center gap-2">
+                <h2 className="text-sm font-semibold text-text-primary truncate flex-1">
                     {slide.title || "Untitled Slide"}
                 </h2>
                 <div className="flex items-center gap-3 flex-shrink-0">
@@ -68,7 +68,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
 
                 <div className="flex flex-wrap justify-center gap-1.5 max-w-[60%]">
                     {slide.tags.slice(0, 3).map((tag, i) => (
-                        <DGTag key={i}>{tag}</DGTag>
+                        <DGTag key={i} variant="accent">{tag}</DGTag>
                     ))}
                     {slide.tags.length > 3 && (
                         <span className="text-xs text-text-faint">+{slide.tags.length - 3}</span>
