@@ -49,7 +49,7 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({ currentStep 
                 </p>
             </div>
 
-            <DGCard variant="elevated" className="w-full p-8">
+            <DGCard variant="elevated" className="w-full p-8 shadow-md">
                 <div className="space-y-5">
                     {DISPLAY_STEPS.map((step, index) => {
                         const status = getStepStatus(index);
@@ -62,7 +62,7 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({ currentStep 
                                         <CheckCircle2 className="w-7 h-7 text-emerald-500" />
                                     )}
                                     {status === 'active' && (
-                                        <Loader2 className="w-7 h-7 text-orange-500 animate-spin" />
+                                        <Loader2 className="w-7 h-7 text-brand-600 animate-spin" />
                                     )}
                                     {status === 'pending' && (
                                         <Circle className="w-7 h-7 text-slate-300" />
@@ -87,7 +87,7 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({ currentStep 
                                 </div>
 
                                 {status === 'active' && (
-                                    <span className="text-xs text-orange-500 font-mono font-medium flex-shrink-0">
+                                    <span className="text-xs text-brand-600 font-medium flex-shrink-0">
                                         Processing...
                                     </span>
                                 )}
@@ -106,7 +106,7 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({ currentStep 
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                         <div
-                            className="bg-orange-500 h-full rounded-full transition-all duration-700 ease-out"
+                            className="bg-brand-600 h-full rounded-full transition-all duration-700 ease-out"
                             style={{ width: `${progressPercent}%` }}
                         />
                     </div>

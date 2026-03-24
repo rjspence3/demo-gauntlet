@@ -56,10 +56,16 @@ function App() {
         let stopped = false;
 
         const run = async () => {
-            // Step 1: Poll until ingestion is complete
+            // Step 1: Poll until ingestion is complete (2-minute timeout)
+            const pollDeadline = Date.now() + 2 * 60 * 1000;
             while (!stopped) {
                 await new Promise(r => setTimeout(r, 2000));
                 if (stopped) return;
+                if (Date.now() > pollDeadline) {
+                    setProcessingError("Processing timed out. Something went wrong — please try again.");
+                    setView('upload');
+                    return;
+                }
                 try {
                     const statusRes = await getSessionStatus(sessionId);
                     if (statusRes.status === 'completed') break;
@@ -134,7 +140,7 @@ function App() {
             <DGLayoutShell>
                 <div className="min-h-screen flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
+                        <Loader2 className="w-10 h-10 text-brand-600 animate-spin" />
                         <p className="text-slate-400 text-sm font-mono animate-pulse">Initializing...</p>
                     </div>
                 </div>
@@ -151,9 +157,9 @@ function App() {
                         className="flex items-center space-x-2 sm:space-x-3 group"
                         onClick={handleNewSession}
                     >
-                        <Swords className="w-6 sm:w-8 h-6 sm:h-8 text-orange-500" />
+                        <Swords className="w-6 sm:w-8 h-6 sm:h-8 text-brand-600" />
                         <span className="font-bold text-xl sm:text-2xl tracking-tight text-slate-900">
-                            Demo <span className="text-orange-500">Gauntlet</span>
+                            Demo <span className="text-brand-600">Gauntlet</span>
                         </span>
                     </button>
 

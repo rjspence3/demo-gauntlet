@@ -1,0 +1,100 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+  name: demo-gauntlet-backend
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+        # Fix 2: Keep one warm instance to eliminate 26-second cold start
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "5"
+    spec:
+      # Fix 1: Shared emptyDir volume so backend and worker both access
+      # the same uploaded files and SQLite database. Without this,
+      # each container has an isolated filesystem — uploaded files
+      # are saved by the backend but the worker can't find them.
+      volumes:
+      - name: shared-data
+        emptyDir: {}
+      containers:
+      - name: backend
+        image: us-central1-docker.pkg.dev/substack-digest-05449/cloud-run-source-deploy/demo-gauntlet-backend@sha256:15b2e7891f0d76976c1cb500bc34d1c7108d0fe929a593bf19f43a78921447a1
+        ports:
+        - containerPort: 8000
+        env:
+        - name: REDIS_HOST
+          value: localhost
+        - name: PROJECT_NAME
+          value: Demo Gauntlet
+        - name: ALLOWED_ORIGINS
+          value: "*"
+        - name: BETA_INVITE_CODE
+          value: BETA-TEST-2024
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-api-key
+              key: latest
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: anthropic-api-key
+              key: latest
+        - name: BRAVE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: brave-api-key
+              key: latest
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: demo-gauntlet-secret-key
+              key: latest
+        volumeMounts:
+        - name: shared-data
+          mountPath: /app/data
+        resources:
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+      - name: redis
+        image: redis:7-alpine
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      - name: worker
+        # Fix: Use the same latest image as the backend (was using stale gcr.io image)
+        image: us-central1-docker.pkg.dev/substack-digest-05449/cloud-run-source-deploy/demo-gauntlet-backend@sha256:15b2e7891f0d76976c1cb500bc34d1c7108d0fe929a593bf19f43a78921447a1
+        command:
+        - arq
+        - backend.worker.WorkerSettings
+        env:
+        - name: REDIS_HOST
+          value: localhost
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-api-key
+              key: latest
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: anthropic-api-key
+              key: latest
+        - name: BRAVE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: brave-api-key
+              key: latest
+        volumeMounts:
+        - name: shared-data
+          mountPath: /app/data
+        resources:
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
