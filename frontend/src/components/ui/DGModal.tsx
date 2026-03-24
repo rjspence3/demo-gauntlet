@@ -1,13 +1,11 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { X } from 'lucide-react';
-import { DGCard } from './DGCard';
 import { DGIconButton } from './DGIconButton';
 
 export interface DGModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** When provided, DGModal renders its own header with title and close button */
   title?: string;
   description?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -33,33 +31,28 @@ export function DGModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
-      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      {/* Content */}
-      <DGCard
-        variant="elevated"
+      <div
         className={cn(
-          'relative z-10 flex flex-col max-h-[90vh]',
+          'relative z-10 flex flex-col max-h-[90vh] bg-surface-elevated border border-border rounded-xl',
           sizeClasses[size]
         )}
       >
-        {/* Header - only rendered when title is provided */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
+          <div className="flex items-center justify-between p-5 border-b border-border">
             <div>
-              <h3 className="text-xl font-semibold text-white">
+              <h3 className="text-lg font-semibold text-text-primary">
                 {title}
               </h3>
               {description && (
-                <p className="text-sm text-slate-400 mt-1">{description}</p>
+                <p className="text-sm text-text-muted mt-1">{description}</p>
               )}
             </div>
             <DGIconButton
-              icon={<X className="w-5 h-5" />}
+              icon={<X className="w-4 h-4" />}
               ariaLabel="Close modal"
               onClick={onClose}
               size="sm"
@@ -67,13 +60,12 @@ export function DGModal({
           </div>
         )}
 
-        {/* Body - when title is provided, add padding; otherwise children control layout */}
         {title ? (
-          <div className="flex-1 overflow-y-auto p-6">{children}</div>
+          <div className="flex-1 overflow-y-auto p-5">{children}</div>
         ) : (
           <div className="flex-1 overflow-hidden flex flex-col">{children}</div>
         )}
-      </DGCard>
+      </div>
     </div>
   );
 }

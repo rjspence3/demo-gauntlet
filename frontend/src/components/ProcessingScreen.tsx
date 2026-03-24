@@ -1,6 +1,5 @@
 import React from 'react';
 import { CheckCircle2, Loader2, Circle } from 'lucide-react';
-import { DGCard } from './ui';
 
 interface ProcessingScreenProps {
     currentStep: ProcessingStep;
@@ -8,10 +7,9 @@ interface ProcessingScreenProps {
 
 export type ProcessingStep = 'uploading' | 'extracting' | 'chunking' | 'researching' | 'generating' | 'complete';
 
-// Map internal step IDs to the 3 honest user-facing steps
 const DISPLAY_STEPS: { id: ProcessingStep; label: string; description: string }[] = [
-    { id: 'uploading', label: 'Uploading', description: 'Sending your deck to the server' },
-    { id: 'extracting', label: 'Processing', description: 'Extracting slides and building index' },
+    { id: 'uploading', label: 'Analyzing Deck', description: 'Extracting slides and content' },
+    { id: 'extracting', label: 'Processing', description: 'Building semantic index' },
     { id: 'researching', label: 'Researching', description: 'Gathering competitive intelligence' },
 ];
 
@@ -39,79 +37,71 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({ currentStep 
         : (currentDisplayIndex / DISPLAY_STEPS.length) * 100;
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[600px] max-w-2xl mx-auto p-6">
+        <div className="flex flex-col items-center justify-center min-h-[70vh] max-w-md mx-auto px-6">
             <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl font-semibold text-text-primary mb-2">
                     Building Your Simulation
                 </h2>
-                <p className="text-slate-600">
-                    Analyzing your deck and preparing the gauntlet.
+                <p className="text-text-muted text-sm">
+                    Usually takes about 60–90 seconds
                 </p>
             </div>
 
-            <DGCard variant="elevated" className="w-full p-8 shadow-md">
-                <div className="space-y-5">
+            <div className="w-full bg-surface border border-border rounded-xl p-6">
+                <div className="space-y-4">
                     {DISPLAY_STEPS.map((step, index) => {
                         const status = getStepStatus(index);
 
                         return (
-                            <div key={step.id} className="flex items-center gap-4">
-                                {/* Status icon */}
-                                <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center">
+                            <div key={step.id} className="flex items-center gap-3">
+                                <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center">
                                     {status === 'completed' && (
-                                        <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+                                        <CheckCircle2 className="w-5 h-5 text-status-success" />
                                     )}
                                     {status === 'active' && (
-                                        <Loader2 className="w-7 h-7 text-brand-600 animate-spin" />
+                                        <Loader2 className="w-5 h-5 text-brand-500 animate-spin" />
                                     )}
                                     {status === 'pending' && (
-                                        <Circle className="w-7 h-7 text-slate-300" />
+                                        <Circle className="w-5 h-5 text-text-faint" />
                                     )}
                                 </div>
 
-                                {/* Label */}
                                 <div className="flex-1 min-w-0">
                                     <p className={[
-                                        'text-sm font-medium leading-tight',
-                                        status === 'completed' ? 'text-slate-600' : '',
-                                        status === 'active' ? 'text-slate-900' : '',
-                                        status === 'pending' ? 'text-slate-400' : '',
+                                        'text-sm font-medium',
+                                        status === 'completed' ? 'text-text-muted' : '',
+                                        status === 'active' ? 'text-text-primary' : '',
+                                        status === 'pending' ? 'text-text-faint' : '',
                                     ].join(' ')}>
                                         {step.label}
                                     </p>
                                     {status === 'active' && (
-                                        <p className="text-xs text-slate-500 mt-0.5 animate-pulse">
+                                        <p className="text-xs text-text-faint mt-0.5 animate-pulse">
                                             {step.description}
                                         </p>
                                     )}
                                 </div>
-
-                                {status === 'active' && (
-                                    <span className="text-xs text-brand-600 font-medium flex-shrink-0">
-                                        Processing...
-                                    </span>
-                                )}
                             </div>
                         );
                     })}
                 </div>
 
                 {/* Progress bar */}
-                <div className="mt-8 pt-6 border-t border-slate-100">
+                <div className="mt-6 pt-5 border-t border-border">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-slate-400 font-mono uppercase tracking-wider">Progress</span>
-                        <span className="text-xs text-slate-500 font-mono tabular-nums">
+                        <span className="text-[10px] text-text-faint font-medium uppercase tracking-wider">Progress</span>
+                        <span className="text-[10px] text-text-muted font-mono tabular-nums">
                             {Math.min(currentDisplayIndex, DISPLAY_STEPS.length)}/{DISPLAY_STEPS.length}
                         </span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-surface-overlay rounded-full h-1 overflow-hidden">
                         <div
-                            className="bg-brand-600 h-full rounded-full transition-all duration-700 ease-out"
+                            className="bg-brand-500 h-full rounded-full transition-all duration-700 ease-out"
                             style={{ width: `${progressPercent}%` }}
                         />
                     </div>
                 </div>
-            </DGCard>
+            </div>
         </div>
     );
 };

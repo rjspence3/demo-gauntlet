@@ -2,20 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { DeckUpload } from './components/DeckUpload';
 import { ProcessingScreen, ProcessingStep } from './components/ProcessingScreen';
 import { ChallengerSelection, Challenger } from './components/ChallengerSelection';
-import { liveClient } from './api/live'; // Ensure client is initialized
+import { liveClient } from './api/live';
 import { LiveSessionMode } from './components/LiveSessionMode';
 import { DemoRoom } from './components/DemoRoom';
 import { SummaryView } from './components/SummaryView';
 import { uploadDeck, getSessionStatus, generateResearch, listPersonas, precomputeChallenges } from './api/client';
 import { Swords, BarChart, Zap, Users, Loader2, AlertCircle } from 'lucide-react';
-import { DGLayoutShell, DGIconButton, DGCard } from './components/ui';
+import { DGLayoutShell, DGIconButton } from './components/ui';
 
 type View = 'upload' | 'research' | 'selection' | 'challenge' | 'live' | 'summary';
 
 function App() {
     const [view, setView] = useState<View>('upload');
     const [sessionId, setSessionId] = useState<string | null>(() => {
-        // Restore session on page refresh so the user doesn't lose progress
         return localStorage.getItem('dg_session_id');
     });
     const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
@@ -27,7 +26,6 @@ function App() {
     const [processingError, setProcessingError] = useState<string | null>(null);
     const [startError, setStartError] = useState<string | null>(null);
 
-    // Load personas once on mount — no auth required
     useEffect(() => {
         const fetchPersonas = async () => {
             try {
@@ -35,6 +33,8 @@ function App() {
                 const uiPersonas = personas.map(p => ({
                     ...p,
                     description: p.style,
+                    tags: p.focus_areas ?? [],
+                    evidenceCount: 0,
                 }));
                 setChallengers(uiPersonas);
             } catch (err) {
@@ -47,7 +47,6 @@ function App() {
         fetchPersonas();
     }, []);
 
-    // Processing Logic
     useEffect(() => {
         if (view !== 'research' || !sessionId) return;
 
@@ -56,13 +55,12 @@ function App() {
         let stopped = false;
 
         const run = async () => {
-            // Step 1: Poll until ingestion is complete (2-minute timeout)
             const pollDeadline = Date.now() + 2 * 60 * 1000;
             while (!stopped) {
                 await new Promise(r => setTimeout(r, 2000));
                 if (stopped) return;
                 if (Date.now() > pollDeadline) {
-                    setProcessingError("Processing timed out. Something went wrong — please try again.");
+                    setProcessingError("Processing timed out. Please try again.");
                     setView('upload');
                     return;
                 }
@@ -80,7 +78,6 @@ function App() {
             }
             if (stopped) return;
 
-            // Step 2: Run research generation (visible step)
             setProcessingStep('researching');
             try {
                 await generateResearch(sessionId);
@@ -89,7 +86,6 @@ function App() {
             }
             if (stopped) return;
 
-            // Step 3: Done
             setProcessingStep('complete');
             setTimeout(() => setView('selection'), 1000);
         };
@@ -139,35 +135,44 @@ function App() {
         return (
             <DGLayoutShell>
                 <div className="min-h-screen flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-10 h-10 text-brand-600 animate-spin" />
-                        <p className="text-slate-400 text-sm font-mono animate-pulse">Initializing...</p>
+                    <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
+                        <p className="text-text-faint text-xs font-mono animate-pulse">Initializing...</p>
                     </div>
                 </div>
             </DGLayoutShell>
         );
     }
 
+    const errorBanner = (message: string) => (
+        <div className="mb-4 max-w-2xl mx-auto rounded-lg border border-status-error/20 bg-status-error/5 px-4 py-3">
+            <div className="flex items-center gap-2.5 text-status-error text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {message}
+            </div>
+        </div>
+    );
+
     return (
         <DGLayoutShell>
-            {/* Navigation / Header */}
-            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+            {/* Navigation */}
+            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/90 backdrop-blur-md">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
                     <button
-                        className="flex items-center space-x-2 sm:space-x-3 group"
+                        className="flex items-center gap-2 group"
                         onClick={handleNewSession}
                     >
-                        <Swords className="w-6 sm:w-8 h-6 sm:h-8 text-brand-600" />
-                        <span className="font-bold text-xl sm:text-2xl tracking-tight text-slate-900">
-                            Demo <span className="text-brand-600">Gauntlet</span>
+                        <Swords className="w-5 h-5 text-brand-500" />
+                        <span className="font-semibold text-sm text-text-primary">
+                            Demo <span className="text-brand-500">Gauntlet</span>
                         </span>
                     </button>
 
-                    <div className="flex items-center space-x-2 sm:space-x-4">
+                    <div className="flex items-center gap-1">
                         {sessionId && (
-                            <div className="flex items-center space-x-1 sm:space-x-2 bg-slate-50 rounded-full p-1 sm:p-1.5 border border-slate-200">
+                            <div className="flex items-center gap-0.5 bg-surface-elevated rounded-lg p-0.5 border border-border mr-2">
                                 <DGIconButton
-                                    icon={<Users className="w-4 sm:w-5 h-4 sm:h-5" />}
+                                    icon={<Users className="w-4 h-4" />}
                                     ariaLabel="Challenger selection"
                                     tooltip="Challengers"
                                     size="sm"
@@ -176,7 +181,7 @@ function App() {
                                     onClick={() => setView('selection')}
                                 />
                                 <DGIconButton
-                                    icon={<Zap className="w-4 sm:w-5 h-4 sm:h-5" />}
+                                    icon={<Zap className="w-4 h-4" />}
                                     ariaLabel="Demo room"
                                     tooltip="Simulation"
                                     size="sm"
@@ -185,7 +190,7 @@ function App() {
                                     onClick={() => setView('challenge')}
                                 />
                                 <DGIconButton
-                                    icon={<Swords className="w-4 sm:w-5 h-4 sm:h-5" />}
+                                    icon={<Swords className="w-4 h-4" />}
                                     ariaLabel="Live Session"
                                     tooltip="Live Mode"
                                     size="sm"
@@ -194,7 +199,7 @@ function App() {
                                     onClick={() => setView('live')}
                                 />
                                 <DGIconButton
-                                    icon={<BarChart className="w-4 sm:w-5 h-4 sm:h-5" />}
+                                    icon={<BarChart className="w-4 h-4" />}
                                     ariaLabel="Summary report"
                                     tooltip="Summary"
                                     size="sm"
@@ -206,7 +211,7 @@ function App() {
                         )}
 
                         <DGIconButton
-                            icon={<Swords className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />}
+                            icon={<Swords className="w-4 h-4 rotate-180" />}
                             ariaLabel="New session"
                             tooltip="New Session"
                             size="sm"
@@ -217,32 +222,10 @@ function App() {
             </nav>
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 pt-24 sm:pt-32 pb-12 relative z-10">
-                {/* Error banners */}
-                {uploadError && (
-                    <DGCard className="mb-4 max-w-2xl mx-auto p-4 border-rose-200 bg-rose-50">
-                        <div className="flex items-center gap-3 text-rose-700 text-sm">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                            {uploadError}
-                        </div>
-                    </DGCard>
-                )}
-                {processingError && (
-                    <DGCard className="mb-4 max-w-2xl mx-auto p-4 border-rose-200 bg-rose-50">
-                        <div className="flex items-center gap-3 text-rose-700 text-sm">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                            {processingError}
-                        </div>
-                    </DGCard>
-                )}
-                {startError && (
-                    <DGCard className="mb-4 max-w-2xl mx-auto p-4 border-rose-200 bg-rose-50">
-                        <div className="flex items-center gap-3 text-rose-700 text-sm">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                            {startError}
-                        </div>
-                    </DGCard>
-                )}
+            <main className="container mx-auto px-4 pt-20 pb-12 relative z-10 flex-1">
+                {uploadError && errorBanner(uploadError)}
+                {processingError && errorBanner(processingError)}
+                {startError && errorBanner(startError)}
 
                 {view === 'upload' && (
                     <DeckUpload onUploadComplete={handleUploadComplete} />
@@ -281,12 +264,12 @@ function App() {
                 )}
             </main>
 
-            <footer className="border-t border-slate-200 bg-white py-4 px-6 text-center">
-                <p className="text-xs text-slate-400">
+            <footer className="border-t border-border py-4 px-6 text-center">
+                <p className="text-xs text-text-faint">
                     Demo Gauntlet &middot; Built by{" "}
                     <a
                         href="https://nomouthlabs.com"
-                        className="underline hover:text-slate-600 transition-colors"
+                        className="text-text-muted hover:text-text-primary transition-colors"
                     >
                         Rob Spence
                     </a>

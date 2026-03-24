@@ -115,29 +115,29 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-12 sm:w-16 h-12 sm:h-16 text-orange-500 animate-spin mb-4" />
-                <p className="text-slate-500 font-mono animate-pulse text-sm sm:text-base">Initializing Simulation...</p>
+                <Loader2 className="w-8 h-8 text-brand-500 animate-spin mb-3" />
+                <p className="text-text-muted text-sm animate-pulse">Loading simulation...</p>
             </div>
         );
     }
 
     if (slides.length === 0) {
         return (
-            <DGCard variant="elevated" className="text-center mt-20 p-6 sm:p-8 max-w-md mx-auto border-rose-200">
-                <AlertTriangle className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-4 text-rose-500" />
-                <p className="text-rose-600 text-sm sm:text-base">No slides found. Please upload a valid deck.</p>
-            </DGCard>
+            <div className="text-center mt-20 p-6 max-w-sm mx-auto">
+                <AlertTriangle className="w-8 h-8 mx-auto mb-3 text-status-error" />
+                <p className="text-status-error text-sm">No slides found. Please upload a valid deck.</p>
+            </div>
         );
     }
 
     const currentSlide = slides[currentSlideIndex];
 
     return (
-        <div className="flex flex-col lg:flex-row min-h-[calc(100vh-8rem)] gap-4 lg:gap-8">
+        <div className="flex flex-col lg:flex-row min-h-[calc(100vh-8rem)] gap-4">
 
             {/* Left Panel: Slide Viewer */}
-            <div className="w-full lg:w-[58%] flex flex-col">
-                <div className="flex-grow relative rounded-xl overflow-hidden h-[350px] sm:h-[450px] lg:h-auto">
+            <div className="w-full lg:w-[55%] flex flex-col">
+                <div className="flex-grow relative h-[350px] sm:h-[450px] lg:h-auto">
                     <SlideViewer
                         slide={currentSlide}
                         currentSlideIndex={currentSlideIndex}
@@ -148,166 +148,159 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                     />
                 </div>
 
-                {/* Slide Progress - Mobile */}
-                <div className="mt-3 flex justify-center items-center px-4 lg:hidden">
-                    <span className="text-xs text-slate-400 font-mono">
-                        SLIDE {currentSlideIndex + 1} / {slides.length}
+                <div className="mt-2 flex justify-center items-center lg:hidden">
+                    <span className="text-[10px] text-text-faint font-mono uppercase tracking-wider">
+                        Slide {currentSlideIndex + 1} / {slides.length}
                     </span>
                 </div>
             </div>
 
             {/* Right Panel: Challenger Interaction */}
-            <div className="w-full lg:w-[42%] flex flex-col min-h-[400px] lg:min-h-0">
-                <DGCard variant="elevated" className="flex-grow flex flex-col overflow-hidden">
+            <div className="w-full lg:w-[45%] flex flex-col min-h-[400px] lg:min-h-0">
+                <DGCard variant="default" className="flex-grow flex flex-col overflow-hidden">
 
                     {/* Header */}
-                    <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1">
                                 {personas.map(p => (
                                     <div
                                         key={p.id}
                                         className={cn(
-                                            "w-2.5 h-2.5 rounded-full transition-all",
+                                            "w-2 h-2 rounded-full transition-all",
                                             activePersona?.id === p.id
-                                                ? "bg-orange-500 ring-2 ring-orange-500/30"
-                                                : "bg-slate-300"
+                                                ? "bg-brand-500 ring-2 ring-brand-500/20"
+                                                : "bg-text-faint"
                                         )}
                                         title={p.name}
                                     />
                                 ))}
                             </div>
                             {activePersona && (
-                                <span className="text-sm font-medium text-slate-900">
+                                <span className="text-sm font-medium text-text-primary">
                                     {activePersona.name}
                                 </span>
                             )}
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <DGButton
                                 variant="ghost"
                                 size="sm"
                                 onClick={onFinish}
-                                className="text-xs text-slate-500 hover:text-slate-900 px-2 py-1 h-auto"
+                                className="text-xs"
                             >
-                                Finish &amp; View Report
+                                Finish
                                 <ArrowRight className="w-3 h-3 ml-1" />
                             </DGButton>
                             <div className="hidden sm:flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Live</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse" />
+                                <span className="text-[10px] text-text-faint font-mono uppercase tracking-wider">Live</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Interaction Area */}
-                    <div className="flex-grow p-4 sm:p-6 overflow-y-auto flex flex-col">
+                    <div className="flex-grow p-4 sm:p-5 overflow-y-auto flex flex-col">
 
-                        {/* Challenge Question */}
                         {activeChallenge ? (
                             <div className="animate-fade-in mb-auto">
-                                {/* Challenger identity */}
                                 <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center">
-                                        <MessageSquare className="w-4 h-4 text-orange-500" />
+                                    <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center">
+                                        <MessageSquare className="w-3.5 h-3.5 text-brand-500" />
                                     </div>
-                                    <span className="text-xs font-medium text-slate-500">
+                                    <span className="text-xs font-medium text-text-muted">
                                         {activePersona?.role || 'Challenger'}
                                     </span>
                                 </div>
 
-                                {/* The Question */}
                                 <div className="relative group">
-                                    <DGCard variant="bordered" className="relative p-4 sm:p-5 border-slate-200">
-                                        <p className="text-base sm:text-lg text-slate-900 leading-relaxed font-medium">
+                                    <div className="bg-surface-overlay border border-border rounded-lg p-4">
+                                        <p className="text-sm sm:text-base text-text-primary leading-relaxed">
                                             {activeChallenge.question}
                                         </p>
-                                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <DGIconButton
-                                                icon={<Info className="w-4 h-4" />}
+                                                icon={<Info className="w-3.5 h-3.5" />}
                                                 ariaLabel="View evidence details"
                                                 tooltip="Inspect Evidence"
                                                 size="sm"
                                                 onClick={() => setShowEvidence(true)}
                                             />
                                         </div>
-                                    </DGCard>
+                                    </div>
                                 </div>
                             </div>
                         ) : isGenerating ? (
                             <div className="flex-grow flex items-center justify-center">
-                                <div className="flex items-center gap-3 text-slate-400">
-                                    <Loader2 className="w-5 h-5 animate-spin text-orange-400" />
-                                    <span className="text-sm font-mono">Analyzing slide...</span>
+                                <div className="flex items-center gap-2 text-text-muted">
+                                    <Loader2 className="w-4 h-4 animate-spin text-brand-500" />
+                                    <span className="text-sm">Analyzing slide...</span>
                                 </div>
                             </div>
                         ) : (
                             <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
-                                <p className="text-slate-700 font-medium text-sm">No objections on this slide — keep moving</p>
-                                <p className="text-slate-400 text-xs mt-1">Navigate to the next slide to continue</p>
+                                <p className="text-text-secondary text-sm">No objections on this slide</p>
+                                <p className="text-text-faint text-xs mt-1">Navigate to the next slide</p>
                             </div>
                         )}
 
-                        {/* Spacer */}
                         {activeChallenge && <div className="flex-grow min-h-4" />}
 
-                        {/* User Response Bubble */}
+                        {/* User Response */}
                         {scoreResult && userResponse && (
-                            <div className="flex justify-end mb-4 animate-fade-in">
+                            <div className="flex justify-end mb-3 animate-fade-in">
                                 <div className="max-w-[85%]">
-                                    <div className="bg-slate-100 rounded-xl rounded-tr-sm px-4 py-3">
-                                        <p className="text-slate-700 text-sm leading-relaxed">{userResponse}</p>
+                                    <div className="bg-surface-overlay rounded-lg rounded-tr-sm px-3 py-2.5">
+                                        <p className="text-text-secondary text-sm leading-relaxed">{userResponse}</p>
                                     </div>
-                                    <span className="text-[10px] text-slate-400 mt-1 block text-right mr-1">Your answer</span>
+                                    <span className="text-[10px] text-text-faint mt-1 block text-right">Your answer</span>
                                 </div>
                             </div>
                         )}
 
-                        {/* Evaluation Result */}
+                        {/* Score Result */}
                         {scoreResult && (
-                            <DGCard variant="elevated" className={cn(
-                                "animate-slide-up",
+                            <div className={cn(
+                                "animate-slide-up rounded-lg border p-4",
                                 scoreResult.score >= 70
-                                    ? "border-emerald-200 bg-emerald-50"
-                                    : "border-amber-200 bg-amber-50"
+                                    ? "border-status-success/20 bg-status-success/5"
+                                    : "border-status-warning/20 bg-status-warning/5"
                             )}>
-                                <div className="p-4 sm:p-5">
-                                    <div className="flex items-baseline justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Score</span>
-                                        <span className={cn(
-                                            "text-3xl sm:text-4xl font-bold tabular-nums",
-                                            scoreResult.score >= 70 ? "text-emerald-600" : "text-amber-600"
-                                        )}>
-                                            {scoreResult.score}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-slate-700 leading-relaxed mb-4">{scoreResult.feedback}</p>
-                                    <DGButton
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={handleNext}
-                                        className="w-full"
-                                    >
-                                        {currentSlideIndex < slides.length - 1 ? 'Next Slide' : 'View Results'}
-                                    </DGButton>
+                                <div className="flex items-baseline justify-between mb-2">
+                                    <span className="text-[10px] font-medium uppercase tracking-wider text-text-faint">Score</span>
+                                    <span className={cn(
+                                        "text-3xl font-bold tabular-nums",
+                                        scoreResult.score >= 70 ? "text-status-success" : "text-status-warning"
+                                    )}>
+                                        {scoreResult.score}
+                                    </span>
                                 </div>
-                            </DGCard>
+                                <p className="text-sm text-text-secondary leading-relaxed mb-3">{scoreResult.feedback}</p>
+                                <DGButton
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handleNext}
+                                    className="w-full"
+                                >
+                                    {currentSlideIndex < slides.length - 1 ? 'Next Slide' : 'View Results'}
+                                </DGButton>
+                            </div>
                         )}
                     </div>
 
                     {/* Input Area */}
                     <div className={cn(
-                        "p-4 sm:p-5 border-t border-slate-100",
-                        (!activeChallenge || scoreResult) && "opacity-50 pointer-events-none"
+                        "p-4 border-t border-border",
+                        (!activeChallenge || scoreResult) && "opacity-40 pointer-events-none"
                     )}>
                         <div className="relative">
                             <textarea
                                 rows={3}
                                 value={userResponse}
                                 onChange={(e) => setUserResponse(e.target.value)}
-                                placeholder={activeChallenge && !scoreResult ? "Type your response... (Enter to submit, Shift+Enter for newline)" : "Waiting for challenge..."}
+                                placeholder={activeChallenge && !scoreResult ? "Type your response... (Enter to submit)" : "Waiting for challenge..."}
                                 disabled={!activeChallenge || !!scoreResult || isSubmitting}
-                                className="w-full resize-none bg-slate-50 border border-slate-200 rounded-xl py-3.5 px-4 pr-14 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50 transition-all disabled:opacity-60 text-sm sm:text-base"
+                                className="w-full resize-none bg-surface-elevated border border-border rounded-lg py-3 px-3 pr-12 text-text-primary placeholder-text-faint focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-all disabled:opacity-50 text-sm"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();
@@ -315,9 +308,9 @@ export const DemoRoom: React.FC<DemoRoomProps> = ({ sessionId, selectedPersonaId
                                     }
                                 }}
                             />
-                            <div className="absolute right-2 bottom-3">
+                            <div className="absolute right-2 bottom-2">
                                 <DGIconButton
-                                    icon={isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                    icon={isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     ariaLabel={isSubmitting ? "Submitting response" : "Submit response"}
                                     size="sm"
                                     variant={userResponse.trim() ? "active" : "default"}

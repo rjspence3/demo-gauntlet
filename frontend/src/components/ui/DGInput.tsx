@@ -17,29 +17,29 @@ export function DGInput({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="text-sm font-medium text-slate-300 ml-1">
+        <label className="text-xs font-medium text-text-muted uppercase tracking-wider ml-1">
           {label}
         </label>
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-faint group-focus-within:text-brand-500 transition-colors">
             {icon}
           </div>
         )}
         <input
           className={cn(
-            'w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-3 px-4 text-white placeholder-slate-500',
-            'focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50 transition-colors',
-            icon && 'pl-11',
-            error && 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/50',
+            'w-full bg-surface border border-border rounded-lg py-2.5 px-3 text-text-primary placeholder-text-faint text-sm',
+            'focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-colors',
+            icon && 'pl-10',
+            error && 'border-status-error/50 focus:border-status-error/50 focus:ring-status-error/30',
             className
           )}
           {...props}
         />
       </div>
       {error && (
-        <p className="text-sm text-rose-500 ml-1">{error}</p>
+        <p className="text-xs text-status-error ml-1">{error}</p>
       )}
     </div>
   );

@@ -39,39 +39,39 @@ export const LiveSessionMode: React.FC<LiveSessionModeProps> = ({ sessionId, sel
     };
 
     return (
-        <div className="flex flex-col h-full max-w-6xl mx-auto w-full gap-6">
-            <header className="flex justify-between items-center pb-4 border-b border-slate-200">
+        <div className="flex flex-col h-full max-w-5xl mx-auto w-full gap-4">
+            <header className="flex justify-between items-center pb-4 border-b border-border">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
-                        <h1 className="text-2xl font-bold text-slate-900">
+                        <h1 className="text-xl font-semibold text-text-primary">
                             Live Gauntlet
                         </h1>
-                        <DGBadge variant="warning">Beta — Chrome only</DGBadge>
+                        <DGBadge variant="warning">Beta</DGBadge>
                     </div>
-                    <p className="text-slate-500 text-sm">Present your deck. Agents will raise their hand if they have questions.</p>
+                    <p className="text-text-muted text-sm">Present your deck. Agents will raise their hand with questions.</p>
                 </div>
                 <DGButton variant="secondary" size="sm" onClick={onExit}>
                     End Session
                 </DGButton>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
                 {/* Presenter Area */}
                 <div className="lg:col-span-2 flex flex-col gap-4">
-                    <DGCard variant="elevated" className="flex-1 p-6 flex flex-col items-center justify-center min-h-[300px]">
+                    <DGCard className="flex-1 p-6 flex flex-col items-center justify-center min-h-[300px]">
                         <div className="flex flex-col items-center gap-6 w-full max-w-md">
                             <AudioCapture onTranscript={handleTranscript} />
 
                             <div className="w-full space-y-2 mt-4">
-                                <p className="text-xs text-slate-400 font-mono text-center mb-2">LIVE TRANSCRIPT</p>
+                                <p className="text-[10px] text-text-faint font-mono text-center mb-2 uppercase tracking-wider">Live Transcript</p>
                                 {transcriptHistory.map((t, i) => (
-                                    <p key={i} className="text-slate-600 text-sm text-center animate-in fade-in slide-in-from-bottom-2">
+                                    <p key={i} className="text-text-secondary text-sm text-center animate-fade-in">
                                         "{t}"
                                     </p>
                                 ))}
                                 {transcriptHistory.length === 0 && (
-                                    <p className="text-slate-400 text-sm text-center italic">
-                                        (Words will appear here...)
+                                    <p className="text-text-faint text-sm text-center">
+                                        Words will appear here...
                                     </p>
                                 )}
                             </div>
@@ -80,13 +80,13 @@ export const LiveSessionMode: React.FC<LiveSessionModeProps> = ({ sessionId, sel
                 </div>
 
                 {/* Agent Gallery */}
-                <DGCard variant="elevated" className="flex flex-col gap-4 p-4">
-                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                        <User className="w-5 h-5 text-slate-500" />
+                <DGCard className="flex flex-col gap-3 p-4">
+                    <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                        <User className="w-4 h-4 text-text-muted" />
                         Audience
                     </h2>
 
-                    <div className="flex flex-col gap-3 overflow-y-auto max-h-[600px] pr-2">
+                    <div className="flex flex-col gap-2 overflow-y-auto max-h-[600px]">
                         {sessionState.agents.map(agent => (
                             <AgentCard key={agent.persona_id} agent={agent} />
                         ))}
@@ -101,52 +101,51 @@ const AgentCard: React.FC<{ agent: AgentState }> = ({ agent }) => {
     const isRaised = agent.status === 'raising_hand';
     const isThinking = agent.status === 'thinking';
 
-    // Convert persona_id to display name
     const displayName = agent.persona_id
         .split('_')
         .map(w => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
 
     return (
-        <DGCard
+        <div
             className={[
-                'p-4 transition-all duration-300',
-                isRaised ? 'border-amber-300 bg-amber-50 shadow-sm' : 'border-slate-200',
+                'p-3 rounded-lg border transition-all duration-300',
+                isRaised ? 'border-status-warning/30 bg-status-warning/5' : 'border-border bg-surface',
             ].join(' ')}
         >
             <div className="flex items-start justify-between">
                 <div>
-                    <h3 className="font-semibold text-slate-900">
+                    <h3 className="font-medium text-sm text-text-primary">
                         {displayName}
                     </h3>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider">
+                    <span className="text-[10px] text-text-faint uppercase tracking-wider">
                         {agent.status.replace(/_/g, ' ')}
                     </span>
                 </div>
 
                 {isRaised && (
-                    <div className="animate-bounce bg-amber-500 text-white p-1.5 rounded-full">
-                        <Hand className="w-5 h-5" />
+                    <div className="animate-bounce bg-status-warning text-white p-1 rounded-md">
+                        <Hand className="w-4 h-4" />
                     </div>
                 )}
                 {isThinking && (
-                    <div className="w-2 h-2 rounded-full bg-slate-400 animate-pulse" />
+                    <div className="w-2 h-2 rounded-full bg-text-faint animate-pulse" />
                 )}
             </div>
 
             {agent.message && (
                 <div className={[
-                    'mt-3 text-sm p-3 rounded-lg border',
+                    'mt-2 text-sm p-2.5 rounded-lg border',
                     isRaised
-                        ? 'bg-amber-50 border-amber-200 text-amber-900'
-                        : 'bg-slate-50 border-slate-200 text-slate-600',
+                        ? 'bg-status-warning/5 border-status-warning/20 text-text-secondary'
+                        : 'bg-surface-elevated border-border text-text-muted',
                 ].join(' ')}>
                     <div className="flex gap-2">
-                        <MessageSquare className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
-                        <p>{agent.message}</p>
+                        <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-50" />
+                        <p className="text-sm">{agent.message}</p>
                     </div>
                 </div>
             )}
-        </DGCard>
+        </div>
     );
 };

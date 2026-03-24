@@ -13,16 +13,16 @@ export function DGBadge({
   className,
 }: DGBadgeProps) {
   const variantClasses = {
-    default: 'bg-slate-100 text-slate-600',
-    success: 'bg-emerald-50 text-emerald-700',
-    warning: 'bg-amber-50 text-amber-700',
-    danger: 'bg-rose-50 text-rose-600',
+    default: 'bg-surface-overlay text-text-secondary border border-border',
+    success: 'bg-status-success/10 text-status-success border border-status-success/20',
+    warning: 'bg-status-warning/10 text-status-warning border border-status-warning/20',
+    danger: 'bg-status-error/10 text-status-error border border-status-error/20',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+        'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium',
         variantClasses[variant],
         className
       )}

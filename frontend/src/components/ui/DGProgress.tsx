@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface DGProgressProps {
-  value: number; // 0-100
+  value: number;
   variant?: 'default' | 'success' | 'warning' | 'danger';
   size?: 'sm' | 'md';
   className?: string;
@@ -15,21 +15,21 @@ export function DGProgress({
   className,
 }: DGProgressProps) {
   const variantClasses = {
-    default: 'bg-orange-500',
-    success: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    danger: 'bg-rose-500',
+    default: 'bg-brand-500',
+    success: 'bg-status-success',
+    warning: 'bg-status-warning',
+    danger: 'bg-status-error',
   };
 
   const sizeClasses = {
-    sm: 'h-1.5',
-    md: 'h-2',
+    sm: 'h-1',
+    md: 'h-1.5',
   };
 
   return (
     <div
       className={cn(
-        'w-full bg-slate-100 rounded-full overflow-hidden',
+        'w-full bg-surface-overlay rounded-full overflow-hidden',
         sizeClasses[size],
         className
       )}

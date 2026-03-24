@@ -6,7 +6,6 @@ interface AudioCaptureProps {
     onTranscript: (text: string) => void;
 }
 
-// Extend window interface for Web Speech API
 declare global {
     interface Window {
         SpeechRecognition: any;
@@ -53,11 +52,7 @@ export const AudioCapture: React.FC<AudioCaptureProps> = ({ onTranscript }) => {
         };
 
         recognitionInstance.onend = () => {
-            // If we were supposed to be listening, restart (continuous loop)
-            // But we manage state via react, so we might need to be careful not to create infinite loop if error
             if (isListening) {
-                // recognitionInstance.start(); 
-                // Note: some browsers stop automatically. For this demo, we might let it stop.
                 setIsListening(false);
             }
         };
@@ -83,30 +78,32 @@ export const AudioCapture: React.FC<AudioCaptureProps> = ({ onTranscript }) => {
     }, [recognition, isListening]);
 
     return (
-        <div className="flex flex-col items-center gap-2 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+        <div className="flex flex-col items-center gap-3 p-4 border border-border rounded-lg bg-surface">
             <div className="flex items-center gap-4">
                 <button
                     onClick={toggleListening}
-                    className={`p-4 rounded-full transition-all ${isListening
-                            ? 'bg-red-500/20 text-red-500 hover:bg-red-500/30 animate-pulse'
-                            : 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30'
-                        }`}
+                    className={[
+                        'p-4 rounded-xl transition-all',
+                        isListening
+                            ? 'bg-status-error/10 text-status-error hover:bg-status-error/20 animate-pulse'
+                            : 'bg-brand-500/10 text-brand-500 hover:bg-brand-500/20'
+                    ].join(' ')}
                 >
                     {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                 </button>
 
                 <div className="flex flex-col">
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-medium text-sm text-text-primary">
                         {isListening ? 'Listening...' : 'Microphone Off'}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-text-faint">
                         {isListening ? 'Speak clearly into your mic' : 'Click to start presentation'}
                     </span>
                 </div>
             </div>
 
             {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm mt-2">
+                <div className="flex items-center gap-2 text-status-error text-sm">
                     <AlertCircle className="w-4 h-4" />
                     <span>{error}</span>
                 </div>
