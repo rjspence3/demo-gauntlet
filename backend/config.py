@@ -40,19 +40,20 @@ class Config(BaseSettings):
         Raises ValueError if configuration is insecure for production.
         Logs a loud warning in all other environments when the default key is active.
         """
-        if self.SECRET_KEY == "your-secret-key-please-change-in-prod":
-            import logging
-            if self.is_production:
+        import logging
+        # SECRET_KEY check always runs before any other production validation.
+        if self.is_production:
+            if self.SECRET_KEY == "your-secret-key-please-change-in-prod":
                 logging.critical("SECURITY CRITICAL: Running in production with default SECRET_KEY! Application execution stopped.")
                 raise ValueError("SECRET_KEY must be changed from default in production environment.")
-            else:
+            if not self.ANTHROPIC_API_KEY:
+                raise ValueError("ANTHROPIC_API_KEY is required in production.")
+        else:
+            if self.SECRET_KEY == "your-secret-key-please-change-in-prod":
                 logging.warning(
                     "SECURITY WARNING: SECRET_KEY is set to the insecure default value. "
                     "Set SECRET_KEY in your .env file before exposing this service externally."
                 )
-
-        if self.is_production and not self.ANTHROPIC_API_KEY:
-            raise ValueError("ANTHROPIC_API_KEY is required in production.")
 
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30

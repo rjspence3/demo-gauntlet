@@ -8,38 +8,32 @@ from backend.models.core import ChallengerPersona
 async def test_orchestrator_decision_logic():
     # Setup Mocks
     mock_session_manager = MagicMock(spec=LiveSessionManager)
-    # Mock the state object
-    mock_session_manager.state = SessionState(id="test", transcript=[])
-    # Mock personas
-    mock_session_manager.personas = {
+    # Loop calls get_state(session_id) and get_personas(session_id) — configure return values.
+    session_state = SessionState(id="test", transcript=[])
+    mock_session_manager.get_state.return_value = session_state
+    mock_session_manager.get_personas.return_value = {
         "skeptic": ChallengerPersona(id="skeptic", name="Skeptic", role="Lead", style="Critical", focus_areas=[])
     }
-    # Mock update_agent_state to be async
     mock_session_manager.update_agent_state = AsyncMock()
 
     # Init Loop
     loop = OrchestratorLoop(session_manager=mock_session_manager)
-    
-    # Mock LLM response
-    # We patch the instance method on the specific object we created
-    # Check what type loop.llm is. It is likely MockLLM or OpenAIClient depending on env.
-    # We'll just force the complete_structured return value.
-    
+
     with patch.object(loop.llm, 'complete_structured') as mock_complete:
         mock_complete.return_value = {
             "interjection": True,
             "persona_id": "skeptic",
             "message": "I object!"
         }
-        
-        # Test Input
-        mock_session_manager.state.transcript.append("Sensitive Topic")
-        
-        # Execute
+
+        # Populate transcript on the state object returned by get_state().
+        session_state.transcript.append("Sensitive Topic")
+
         await loop.process_transcript_update("test")
-        
-        # Verify
+
+        # update_agent_state signature: (session_id, persona_id, status, message)
         mock_session_manager.update_agent_state.assert_called_once_with(
+            session_id="test",
             persona_id="skeptic",
             status="raising_hand",
             message="I object!"
@@ -49,22 +43,22 @@ async def test_orchestrator_decision_logic():
 async def test_orchestrator_no_interjection():
     # Setup Mocks
     mock_session_manager = MagicMock(spec=LiveSessionManager)
-    mock_session_manager.state = SessionState(id="test", transcript=[])
-    mock_session_manager.personas = {
+    session_state = SessionState(id="test", transcript=[])
+    mock_session_manager.get_state.return_value = session_state
+    mock_session_manager.get_personas.return_value = {
         "skeptic": ChallengerPersona(id="skeptic", name="Skeptic", role="Lead", style="Critical", focus_areas=[])
     }
     mock_session_manager.update_agent_state = AsyncMock()
 
     loop = OrchestratorLoop(session_manager=mock_session_manager)
-    
+
     with patch.object(loop.llm, 'complete_structured') as mock_complete:
         mock_complete.return_value = {
             "interjection": False
         }
-        
-        mock_session_manager.state.transcript.append("Boring Topic")
-        
+
+        session_state.transcript.append("Boring Topic")
+
         await loop.process_transcript_update("test")
-        
-        # Verify NO call
+
         mock_session_manager.update_agent_state.assert_not_called()
