@@ -6,6 +6,19 @@ from fastapi import UploadFile
 import boto3
 from backend.config import config
 
+_GCS_CLIENT = None
+
+
+def _gcs_client():
+    """Cached GCS client — storage.Client() does ADC credential discovery, which
+    is too expensive to repeat on every upload (esp. on a cold instance)."""
+    global _GCS_CLIENT
+    if _GCS_CLIENT is None:
+        from google.cloud import storage
+        _GCS_CLIENT = storage.Client()
+    return _GCS_CLIENT
+
+
 class BlobStorage(ABC):
     """
     Abstract base class for blob storage operations.
@@ -105,8 +118,7 @@ class GCSBlobStorage(BlobStorage):
         self.bucket_name = config.GCS_BUCKET_NAME
         if not self.bucket_name:
             raise ValueError("GCS_BUCKET_NAME is not set")
-        from google.cloud import storage
-        self.bucket = storage.Client().bucket(self.bucket_name)
+        self.bucket = _gcs_client().bucket(self.bucket_name)
 
     def save_upload(self, file: UploadFile, session_id: str) -> str:
         filename = os.path.basename(file.filename) if file.filename else "unknown"

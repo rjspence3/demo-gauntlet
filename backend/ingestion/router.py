@@ -11,6 +11,7 @@ from backend.ingestion.chunker import chunk_slide
 from backend.ingestion.tagger import tag_slide
 from backend.models.store import VectorStore
 from backend.models.session import SessionStore
+from backend.limiter import limiter
 
 router = APIRouter(prefix="/ingestion", tags=["ingestion"])
 
@@ -18,13 +19,15 @@ router = APIRouter(prefix="/ingestion", tags=["ingestion"])
 store = VectorStore()
 
 @router.post("/upload")
+@limiter.limit("5/minute")
 async def upload_deck(
     request: Request,
     file: UploadFile = File(...)
 ) -> dict[str, Any]:
     """
     Uploads a deck, parses it, and ingests it into the vector store.
-    Auth removed: demo mode — open access for all visitors.
+    Open access (demo mode), but rate-limited and size-capped: this endpoint
+    enqueues a billable worker Job, so it must not be spammable anonymously.
     """
     if not file.filename:
          raise HTTPException(status_code=400, detail="Filename is missing")
@@ -38,10 +41,17 @@ async def upload_deck(
             detail=f"Unsupported file type. Allowed: {allowed_extensions}"
         )
 
-    # P0-2: Reject uploads above 50MB to prevent DoS via large file
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    # Fast-path reject on the declared size, then enforce the real limit by
+    # streaming — Content-Length (file.size) is client-controlled and spoofable.
     if file.size and file.size > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
+    total = 0
+    while chunk := await file.read(1024 * 1024):
+        total += len(chunk)
+        if total > MAX_FILE_SIZE:
+            raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
+    await file.seek(0)  # rewind so save_upload can re-read the stream
 
     session_id = str(uuid.uuid4())
     # Use BlobStorage to save the file

@@ -31,5 +31,8 @@ class WorkerSettings:
         conn_retry_delay=1,
     )
     queue_name = f"{config.REDIS_KEY_PREFIX}default"  # Prefixed queue to avoid collisions
+    # Retry a job on transient failure (Upstash/GCS/Neon blip) instead of
+    # silently dropping it — burst mode does not re-enqueue on unhandled error.
+    max_tries = 3
     on_startup = startup
     on_shutdown = shutdown

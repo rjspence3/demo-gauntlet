@@ -21,9 +21,17 @@ from backend.config import config
 
 logger = logging.getLogger(__name__)
 
+# Hold references to in-flight trigger tasks so the event loop doesn't garbage-
+# collect them mid-execution (asyncio only keeps weak refs to bare tasks).
+_pending: set = set()
+
 
 async def trigger_worker_job() -> None:
-    """Execute the worker Cloud Run Job so it drains the queue and exits."""
+    """
+    Fire the worker Cloud Run Job to drain the queue. Truly fire-and-forget: the
+    job is already durable in Redis, so the upload response must NOT block on the
+    Cloud Run control plane (a gRPC hiccup would otherwise hang every upload).
+    """
     if not config.WORKER_JOB_NAME:
         return  # local dev / triggering disabled — long-lived worker handles the queue
 
@@ -31,13 +39,17 @@ async def trigger_worker_job() -> None:
         logger.warning("WORKER_JOB_NAME is set but GCP_PROJECT is missing; skipping worker trigger.")
         return
 
+    task = asyncio.create_task(_run_worker_job())
+    _pending.add(task)
+    task.add_done_callback(_pending.discard)
+
+
+async def _run_worker_job() -> None:
     try:
         from google.cloud import run_v2
 
         client = run_v2.JobsClient()
         name = client.job_path(config.GCP_PROJECT, config.GCP_REGION, config.WORKER_JOB_NAME)
-        # run_job is a sync gRPC call returning a long-running op; fire-and-forget
-        # off the event loop. We don't await completion — we only need it started.
         await asyncio.to_thread(client.run_job, name=name)
         logger.info("Triggered worker job '%s'.", config.WORKER_JOB_NAME)
     except Exception:
