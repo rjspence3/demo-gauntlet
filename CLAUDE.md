@@ -1,94 +1,127 @@
 # Demo Gauntlet
 
-FastAPI + Python project.
+AI demo-practice simulator. FastAPI + Python backend, React/Vite/Tailwind frontend.
+Upload a sales deck → research the prospect → face AI "challenger" personas.
+
+---
+
+## Architecture
+
+The backend runs as **two separate services** in production (one container locally):
+
+- **Web** — FastAPI (`backend.main:app`). Handles uploads, enqueues processing,
+  serves results. Stateless; scales to zero.
+- **Worker** — arq job (`backend.worker.WorkerSettings`) running one task,
+  `process_deck_upload_task` (parse → OCR → embed → tag). Runs in `--burst`
+  mode: drains the queue, then exits.
+
+Because web and worker are separate containers, **no state is shared on local
+disk** — everything goes through networked, scale-to-zero backends:
+
+| Concern  | Backend                    | Config              |
+|----------|----------------------------|---------------------|
+| Job queue| Upstash Redis (serverless, TLS) | `REDIS_*`       |
+| Files    | Google Cloud Storage       | `BLOB_STORAGE_TYPE=gcs`, `GCS_BUCKET_NAME` |
+| Sessions | Neon Postgres (serverless) | `DATABASE_URL`      |
+
+On upload, the web enqueues the job then triggers the worker Job
+(`backend/services/worker_trigger.py`, best-effort). A Cloud Scheduler job runs
+the worker every 2h as a safety-net drainer.
+
+> Why this shape: the old single container (embedded Redis + in-process worker,
+> `min-instances=1`) billed 24/7 and threw 5xx from CPU starvation between
+> requests. The split makes everything pay-per-use.
 
 ---
 
 ## Environment Setup
 
 ```bash
-# Activate virtual environment (REQUIRED)
-source .venv/bin/activate
-
-# Install dependencies
+source .venv/bin/activate          # REQUIRED
 pip install -e .
-pip install -e ".[dev]"  # includes test dependencies
+pip install -e ".[dev]"            # test deps
 ```
+
+### Local dev (single machine)
+
+`docker-compose up` runs web + frontend + **local** Redis + worker together.
+Locally `BLOB_STORAGE_TYPE=local` (disk) and `DATABASE_URL=sqlite` — the shared
+backends above are production-only. Secrets live in `.env` (gitignored).
 
 ---
 
 ## Commands
 
 ```bash
-# Start API
-uvicorn backend.main:app --host 127.0.0.1 --reload --port 8001
-
-# Start frontend
-npm run dev
-
-# Run tests
-pytest
-
-# Type checking
-mypy .
+uvicorn backend.main:app --host 127.0.0.1 --reload --port 8001   # API
+npm --prefix frontend run dev                                    # frontend
+pytest                                                           # tests
+mypy .                                                           # type check
 ```
+
+---
+
+## Deployment (GCP project `substack-digest-05449`, region `us-central1`)
+
+Build once, deploy to both targets:
+
+```bash
+IMG=us-central1-docker.pkg.dev/substack-digest-05449/cloud-run-source-deploy/demo-gauntlet:TAG
+gcloud builds submit --tag "$IMG"                       # root Dockerfile (.dockerignore excludes .env*)
+
+# Web service (min-instances=0)
+gcloud run deploy demo-gauntlet-backend --image "$IMG" --region=us-central1 --min-instances=0 ...
+
+# Worker Job (arq burst)
+gcloud run jobs deploy demo-gauntlet-worker --image "$IMG" --region=us-central1 \
+  --command=arq --args=backend.worker.WorkerSettings,--burst ...
+```
+
+- **Web**: Cloud Run service `demo-gauntlet-backend` (min=0).
+- **Worker**: Cloud Run Job `demo-gauntlet-worker` (`arq … --burst`); web SA has
+  `run.invoker` on it. Each run cold-starts + loads the embedding model
+  (~60–90s), so end-to-end processing is ~2 min.
+- **Frontend**: Vercel project `demo-gauntlet-ui` → auto-deploys on push to
+  `main` (remote `portfolio` = `github.com/rjspence3/demo-gauntlet`; `origin` is
+  dead).
+- **Secrets** (Secret Manager, injected as env, never in the image):
+  `upstash-redis-password`, `database-url`, `anthropic-api-key`,
+  `openai-api-key`, `brave-api-key`, `demo-gauntlet-secret-key`.
+
+---
+
+## Testing
+
+- **No API keys required.** `backend/tests/conftest.py` overrides the LLM
+  dependencies (`get_agent`, `get_llm`) with `MockLLM`/`MockSearchClient` via
+  `app.dependency_overrides` — the only mechanism FastAPI honors (`patch()`-ing
+  the module attribute is silently ignored). Without this, keyless runs 500.
+- In-memory test SQLite uses **`StaticPool`** so all threads share one DB.
+- The slowapi limiter is **reset between tests** (all tests share the
+  `testclient` IP, so counts would otherwise bleed).
+- CI: `.github/workflows/ci.yml` runs `pytest backend/tests/` against a Redis
+  service container with `DATABASE_URL=sqlite:///:memory:` and no API keys.
+
+---
+
+## Gotchas
+
+- `SessionStore.engine` is a **lazy property** (resolves `backend.database.engine`
+  at call time). Don't capture the engine in `__init__` — the singleton is built
+  at import, before tests can patch it.
+- The deployed image is built from the **root `Dockerfile`** (`COPY . .`);
+  `.dockerignore` must keep excluding `.env*` or secrets leak into the image.
+- Worker connects to Upstash over TLS; `RedisSettings` sets `conn_timeout=15` +
+  retries (arq's 1s default crashes the burst worker under load).
 
 ---
 
 ## Structure
 
 ```
-backend/
-  api/
-    routers/
-  challenges/
-  dspy_optimization/
-  evaluation/
-  ingestion/
-  migrations/
-    versions/
-  models/
-  research/
-  services/
-  session/
-  tests/
-data/
-  avatars/
-  chroma_db/
-  chroma_db_backup/
-    9e05be18-0cf2-41e0-8c03-9b53ca1ce7c9/
-    cd53b6d2-c123-44ef-ac77-f3ab50b97ed3/
-  sessions/
-    2a2f0c4f-6d65-42be-b9ab-3214852dda6c/
-    4c08c7f4-b8f4-4807-ba23-bf5da3d03f7e/
-    54ede032-1f13-4c29-9cde-74c91390b231/
-    5abc8fc7-0b8d-42f0-a5ef-81855df66a14/
-    6e1087a1-9116-4e19-b124-70feeafb11e1/
-    70ae0a2e-96b4-4fa0-9223-33122752a800/
-    8703b17c-950e-4cdd-af11-bbb9a26b0f2b/
-    894badfd-369a-4f8f-89ca-310c941a9a56/
-    b025e650-7794-4fe1-ae36-6b07dae5264f/
-    s1/
-    test-session/
-demo_gauntlet.egg-info/
-deployment/
-dev/
-doc/
-docs/
-  plan/
-frontend/
-  public/
-    assets/
-  src/
-    api/
-    assets/
-    components/
-    lib/
-scripts/
+backend/   api/ challenges/ evaluation/ ingestion/ migrations/ models/
+           research/ services/ session/ tests/ worker.py main.py
+frontend/  src/{api,components,components/ui,lib}
+docs/plan/ design-time planning docs (historical)
+deployment/ legacy k8s/Cloud Run manifests (not the source of truth)
 ```
-
----
-
-## Notes
-
-- Tech: FastAPI, Python

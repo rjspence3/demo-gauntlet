@@ -18,6 +18,25 @@
 -   **AI**: Anthropic Claude (primary), OpenAI (optional fallback).
 -   **Search**: Brave Search (optional).
 
+## ☁️ Production Architecture
+
+In production the backend is split into two scale-to-zero services on Google
+Cloud Run, with all shared state on networked, serverless backends:
+
+-   **Web** (`demo-gauntlet-backend`, Cloud Run service, `min-instances=0`) —
+    handles uploads, enqueues processing, serves results.
+-   **Worker** (`demo-gauntlet-worker`, Cloud Run Job, `arq … --burst`) —
+    processes each deck (parse → OCR → embed → tag), then exits. Triggered by
+    the web service on upload, with a Cloud Scheduler safety-net every 2h.
+-   **Job queue** — Upstash Redis (serverless, TLS).
+-   **File storage** — Google Cloud Storage (`BLOB_STORAGE_TYPE=gcs`).
+-   **Sessions / DB** — Neon serverless Postgres (`DATABASE_URL`).
+-   **Frontend** — Vercel (`demo-gauntlet-ui.vercel.app`).
+
+Local development keeps everything on one machine via `docker-compose` (local
+Redis, local disk, SQLite); the serverless backends above are production-only.
+See `CLAUDE.md` for deploy commands and the full env-var/secret list.
+
 ## 📦 Installation
 
 ### Prerequisites
@@ -95,7 +114,7 @@ Access the application at `http://localhost:5173`.
 -   **Upload Limits**: File uploads are capped at 50 MB (HTTP 413 if exceeded).
 -   **Server-Side Scoring**: Ideal answers are looked up server-side only; the client never controls the grading key.
 -   **CORS**: By default, the API only accepts requests from `http://localhost:5173`. Update `ALLOWED_ORIGINS` in `.env` for production.
--   **Data**: Uploaded decks are stored in `data/decks`. Ensure this directory is secured in production.
+-   **Data**: Locally, uploaded decks are stored in `data/decks`. In production they go to a private Google Cloud Storage bucket (`BLOB_STORAGE_TYPE=gcs`), accessed via the service account — no public access.
 
 ## 📄 License
 MIT
