@@ -10,10 +10,25 @@ from sqlalchemy.pool import StaticPool
 @pytest.fixture(autouse=True)
 def override_auth():
     """
-    Override the get_current_user dependency for all tests.
+    Override auth + LLM dependencies for all tests.
+
+    The LLM dependencies (get_agent / get_llm) raise 500 without an API key by
+    design. CI has no keys, so inject mock-backed implementations here — via
+    dependency_overrides (the only mechanism FastAPI honors; patching the
+    module attribute is ignored because the dependency is captured at import).
     """
+    from backend.research.router import get_agent
+    from backend.challenges.router import get_llm
+    from backend.research.agent import ResearchAgent
+    from backend.research.client import MockSearchClient
+    from backend.models.llm import MockLLM
+
     mock_user = User(id=1, email="test@example.com", hashed_password="fake", is_active=True)
     app.dependency_overrides[get_current_user] = lambda: mock_user
+    app.dependency_overrides[get_agent] = lambda: ResearchAgent(
+        llm_client=MockLLM(), search_client=MockSearchClient()
+    )
+    app.dependency_overrides[get_llm] = lambda: MockLLM()
     yield
     app.dependency_overrides = {}
 
