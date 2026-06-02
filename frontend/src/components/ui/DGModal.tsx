@@ -32,23 +32,23 @@ export function DGModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative z-10 flex flex-col max-h-[90vh] bg-white/95 backdrop-blur-md border border-border-ai rounded-2xl shadow-glass-hover',
+          'relative z-10 flex flex-col max-h-[90vh] bg-[#0A3D6B]/95 backdrop-blur-md border border-[#0176D3]/25 rounded-2xl shadow-glass-hover',
           sizeClasses[size]
         )}
       >
         {title && (
-          <div className="flex items-center justify-between p-5 border-b border-border">
+          <div className="flex items-center justify-between p-5 border-b border-white/12">
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">
+              <h3 className="text-lg font-semibold text-white">
                 {title}
               </h3>
               {description && (
-                <p className="text-sm text-text-muted mt-1">{description}</p>
+                <p className="text-sm text-white/60 mt-1">{description}</p>
               )}
             </div>
             <DGIconButton

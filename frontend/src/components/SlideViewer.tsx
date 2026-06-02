@@ -21,14 +21,14 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
     onFinish,
 }) => {
     return (
-        <div className="flex flex-col h-full w-full overflow-hidden bg-white/85 backdrop-blur-sm border border-border-ai rounded-2xl shadow-glass">
+        <div className="flex flex-col h-full w-full overflow-hidden bg-[#0A3D6B]/90 backdrop-blur-sm border border-[#0176D3]/25 rounded-2xl shadow-glass">
             {/* Slide Header */}
-            <div className="px-5 py-3 border-b border-border flex justify-between items-center gap-2">
-                <h2 className="text-sm font-semibold text-text-primary truncate flex-1">
+            <div className="px-5 py-3 border-b border-white/12 flex justify-between items-center gap-2">
+                <h2 className="text-sm font-semibold text-white truncate flex-1">
                     {slide.title || "Untitled Slide"}
                 </h2>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-xs text-text-faint font-mono tabular-nums">
+                    <span className="text-xs text-white/40 font-mono tabular-nums">
                         {currentSlideIndex + 1}/{totalSlides}
                     </span>
                     <DGButton
@@ -45,11 +45,11 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
             {/* Slide Content */}
             <div className="flex-1 p-5 sm:p-8 overflow-y-auto">
                 {slide.text ? (
-                    <p className="whitespace-pre-wrap leading-relaxed text-text-secondary text-sm">
+                    <p className="whitespace-pre-wrap leading-relaxed text-white/85 text-sm">
                         {slide.text}
                     </p>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-text-faint py-12">
+                    <div className="flex flex-col items-center justify-center h-full text-white/30 py-12">
                         <FileText className="w-10 h-10 mb-2 opacity-30" />
                         <p className="text-sm">No text content detected.</p>
                     </div>
@@ -57,7 +57,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
             </div>
 
             {/* Slide Footer */}
-            <div className="px-4 py-3 flex justify-between items-center border-t border-border">
+            <div className="px-4 py-3 flex justify-between items-center border-t border-white/12">
                 <DGIconButton
                     icon={<ChevronLeft className="w-4 h-4" />}
                     ariaLabel="Previous slide"
@@ -71,7 +71,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
                         <DGTag key={i} variant="accent">{tag}</DGTag>
                     ))}
                     {slide.tags.length > 3 && (
-                        <span className="text-xs text-text-faint">+{slide.tags.length - 3}</span>
+                        <span className="text-xs text-white/40">+{slide.tags.length - 3}</span>
                     )}
                 </div>
 

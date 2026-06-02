@@ -136,8 +136,8 @@ function App() {
             <DGLayoutShell>
                 <div className="min-h-screen flex items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="w-6 h-6 text-ai-500 animate-spin" />
-                        <p className="text-text-faint text-xs font-mono animate-soft-pulse">Initializing...</p>
+                        <Loader2 className="w-6 h-6 text-[#0176D3] animate-spin" />
+                        <p className="text-white/40 text-xs font-mono animate-soft-pulse">Initializing...</p>
                     </div>
                 </div>
             </DGLayoutShell>
@@ -145,8 +145,8 @@ function App() {
     }
 
     const errorBanner = (message: string) => (
-        <div className="mb-4 max-w-2xl mx-auto rounded-xl border border-status-error/20 bg-status-error/5 px-4 py-3">
-            <div className="flex items-center gap-2.5 text-status-error text-sm">
+        <div className="mb-4 max-w-2xl mx-auto rounded-xl border border-[#BA0517]/30 bg-[#BA0517]/10 px-4 py-3">
+            <div className="flex items-center gap-2.5 text-[#EF5350] text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {message}
             </div>
@@ -155,22 +155,22 @@ function App() {
 
     return (
         <DGLayoutShell>
-            {/* Navigation — white/transparent, minimal */}
-            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/80 backdrop-blur-md">
+            {/* Navigation — dark navy, enterprise feel */}
+            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/12 bg-[#032D60]/90 backdrop-blur-md">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
                     <button
                         className="flex items-center gap-2.5 group"
                         onClick={handleNewSession}
                     >
-                        <Swords className="w-5 h-5 text-brand-500" />
-                        <span className="font-bold text-sm text-text-primary tracking-tight">
-                            Demo <span className="text-brand-500">Gauntlet</span>
+                        <Swords className="w-5 h-5 text-[#0176D3]" />
+                        <span className="font-bold text-sm text-white tracking-tight">
+                            Demo <span className="text-[#0176D3]">Gauntlet</span>
                         </span>
                     </button>
 
                     <div className="flex items-center gap-1">
                         {sessionId && (
-                            <div className="flex items-center gap-0.5 bg-white/60 backdrop-blur-sm rounded-xl p-0.5 border border-border-ai mr-2">
+                            <div className="flex items-center gap-0.5 bg-white/5 backdrop-blur-sm rounded-xl p-0.5 border border-white/10 mr-2">
                                 <DGIconButton
                                     icon={<Users className="w-4 h-4" />}
                                     ariaLabel="Challenger selection"
@@ -264,12 +264,12 @@ function App() {
                 )}
             </main>
 
-            <footer className="border-t border-border py-4 px-6 text-center">
-                <p className="text-xs text-text-faint">
+            <footer className="border-t border-white/12 py-4 px-6 text-center">
+                <p className="text-xs text-white/30">
                     Demo Gauntlet &middot; Built by{" "}
                     <a
                         href="https://nomouthlabs.com"
-                        className="text-text-muted hover:text-ai-500 transition-colors"
+                        className="text-white/50 hover:text-[#0176D3] transition-colors"
                     >
                         Rob Spence
                     </a>

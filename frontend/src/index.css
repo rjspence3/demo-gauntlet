@@ -5,43 +5,39 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Page — light like Pitch */
-  --bg-page: #F8F9FC;
-  --bg-page-alt: #F1F3F8;
+  /* Backgrounds — Pinch navy */
+  --bg-page: #002E50;
+  --bg-page-alt: #032D60;
+  --bg-surface: #0A3D6B;
 
-  /* Cards — glassmorphism like Expert Council but lighter */
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --card-border: rgba(99, 102, 241, 0.15);
-  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
-  --card-backdrop: blur(12px);
+  /* Cards */
+  --card-bg: rgba(10, 61, 107, 0.9);
+  --card-border: rgba(1, 118, 211, 0.25);
+  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
+  --card-backdrop: blur(8px);
 
   /* Typography */
-  --text-primary: #0F1117;
-  --text-secondary: #374151;
-  --text-muted: #6B7280;
-  --text-subtle: #9CA3AF;
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-subtle: rgba(255, 255, 255, 0.4);
 
-  /* AI/Intelligence accent — Expert Council's indigo/violet */
-  --accent-ai: #6366F1;
-  --accent-ai-hover: #4F46E5;
-  --accent-ai-subtle: rgba(99, 102, 241, 0.08);
-  --accent-ai-border: rgba(99, 102, 241, 0.2);
+  /* Salesforce blue accents */
+  --accent-primary: #0176D3;
+  --accent-primary-hover: #0264B0;
+  --accent-primary-subtle: rgba(1, 118, 211, 0.15);
+  --accent-primary-border: rgba(1, 118, 211, 0.4);
 
-  /* Brand CTA — orange, used sparingly */
-  --brand: #F97316;
-  --brand-hover: #EA6C10;
-  --brand-subtle: rgba(249, 115, 22, 0.08);
-
-  /* Status */
-  --success: #10B981;
-  --error: #EF4444;
-  --warning: #F59E0B;
+  /* Enterprise green for success */
+  --success: #2E844A;
+  --error: #BA0517;
+  --warning: #FE9339;
 
   /* Borders */
-  --border: rgba(0, 0, 0, 0.08);
-  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.06);
 }
 
 body {
@@ -49,6 +45,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--bg-page);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(1, 118, 211, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(3, 45, 96, 0.4) 0%, transparent 60%);
   color: var(--text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -56,9 +55,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Selection — indigo accent */
+/* Selection — SF blue accent */
 ::selection {
-  background-color: rgba(99, 102, 241, 0.2);
+  background-color: rgba(1, 118, 211, 0.3);
   color: var(--text-primary);
 }
 
@@ -80,11 +79,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Animations */

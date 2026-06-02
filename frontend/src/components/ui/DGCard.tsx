@@ -13,9 +13,9 @@ export function DGCard({
   ...props
 }: DGCardProps) {
   const variantClasses = {
-    default: 'bg-white/85 backdrop-blur-sm border border-border-ai shadow-glass',
-    elevated: 'bg-white/90 backdrop-blur-md border border-border-ai shadow-glass-hover',
-    bordered: 'bg-transparent border border-border-ai',
+    default: 'bg-[#0A3D6B]/90 backdrop-blur-sm border border-[#0176D3]/25 shadow-glass',
+    elevated: 'bg-[#0D4A7F]/90 backdrop-blur-md border border-[#0176D3]/30 shadow-glass-hover',
+    bordered: 'bg-transparent border border-[#0176D3]/25',
   };
 
   return (

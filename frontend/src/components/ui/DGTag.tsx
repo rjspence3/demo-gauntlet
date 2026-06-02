@@ -13,8 +13,8 @@ export function DGTag({
   className,
 }: DGTagProps) {
   const variantClasses = {
-    default: 'bg-white/60 text-text-muted border border-border',
-    accent: 'bg-ai-50 text-ai-700 border border-ai-100',
+    default: 'bg-white/10 text-white/60 border border-white/12',
+    accent: 'bg-[#0176D3]/15 text-[#3392DF] border border-[#0176D3]/25',
   };
 
   return (

@@ -82,32 +82,32 @@ export const AudioCapture: React.FC<AudioCaptureProps> = ({ onTranscript }) => {
     }, [recognition, isListening]);
 
     return (
-        <div className="flex flex-col items-center gap-3 p-5 border border-border-ai rounded-2xl bg-white/80 backdrop-blur-sm">
+        <div className="flex flex-col items-center gap-3 p-5 border border-[#0176D3]/25 rounded-2xl bg-[#032D60]/50 backdrop-blur-sm">
             <div className="flex items-center gap-4">
                 <button
                     onClick={toggleListening}
                     className={[
                         'p-4 rounded-2xl transition-all',
                         isListening
-                            ? 'bg-status-error/10 text-status-error hover:bg-status-error/20 animate-soft-pulse'
-                            : 'bg-ai-50 text-ai-500 hover:bg-ai-100'
+                            ? 'bg-[#BA0517]/15 text-[#EF5350] hover:bg-[#BA0517]/25 animate-soft-pulse'
+                            : 'bg-[#0176D3]/15 text-[#0176D3] hover:bg-[#0176D3]/25'
                     ].join(' ')}
                 >
                     {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                 </button>
 
                 <div className="flex flex-col">
-                    <span className="font-semibold text-sm text-text-primary">
+                    <span className="font-semibold text-sm text-white">
                         {isListening ? 'Listening...' : 'Microphone Off'}
                     </span>
-                    <span className="text-xs text-text-faint">
+                    <span className="text-xs text-white/40">
                         {isListening ? 'Speak clearly into your mic' : 'Click to start presentation'}
                     </span>
                 </div>
             </div>
 
             {error && (
-                <div className="flex items-center gap-2 text-status-error text-sm">
+                <div className="flex items-center gap-2 text-[#EF5350] text-sm">
                     <AlertCircle className="w-4 h-4" />
                     <span>{error}</span>
                 </div>

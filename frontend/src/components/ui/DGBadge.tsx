@@ -13,11 +13,11 @@ export function DGBadge({
   className,
 }: DGBadgeProps) {
   const variantClasses = {
-    default: 'bg-white/60 text-text-secondary border border-border',
-    success: 'bg-status-success/10 text-status-success border border-status-success/20',
-    warning: 'bg-status-warning/10 text-status-warning border border-status-warning/20',
-    danger: 'bg-status-error/10 text-status-error border border-status-error/20',
-    ai: 'bg-ai-50 text-ai-600 border border-ai-200',
+    default: 'bg-white/10 text-white/80 border border-white/15',
+    success: 'bg-[#2E844A]/15 text-[#4CAF50] border border-[#2E844A]/25',
+    warning: 'bg-[#FE9339]/15 text-[#FE9339] border border-[#FE9339]/25',
+    danger: 'bg-[#BA0517]/15 text-[#EF5350] border border-[#BA0517]/25',
+    ai: 'bg-[#0176D3]/15 text-[#3392DF] border border-[#0176D3]/25',
   };
 
   return (

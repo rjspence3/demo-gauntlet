@@ -15,11 +15,11 @@ export function DGProgress({
   className,
 }: DGProgressProps) {
   const variantClasses = {
-    default: 'bg-brand-500',
-    success: 'bg-status-success',
-    warning: 'bg-status-warning',
-    danger: 'bg-status-error',
-    ai: 'bg-gradient-to-r from-ai-500 to-ai-400',
+    default: 'bg-[#0176D3]',
+    success: 'bg-[#2E844A]',
+    warning: 'bg-[#FE9339]',
+    danger: 'bg-[#BA0517]',
+    ai: 'bg-gradient-to-r from-[#0176D3] to-[#3392DF]',
   };
 
   const sizeClasses = {
@@ -30,7 +30,7 @@ export function DGProgress({
   return (
     <div
       className={cn(
-        'w-full bg-black/5 rounded-full overflow-hidden',
+        'w-full bg-white/10 rounded-full overflow-hidden',
         sizeClasses[size],
         className
       )}
