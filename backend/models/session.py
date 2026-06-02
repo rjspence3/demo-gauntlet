@@ -9,12 +9,14 @@ class SessionStore:
     """
     Manages database storage for session data.
     """
-    def __init__(self):
-        """
-        Initialize the SessionStore.
-        """
+    @property
+    def engine(self):
+        # Resolved lazily so the current backend.database.engine is always used.
+        # This singleton is constructed at import time; capturing the engine then
+        # would pin a stale reference and ignore a later swap (e.g. the in-memory
+        # engine tests patch in after import).
         from backend.database import engine
-        self.engine = engine
+        return engine
 
     def _get_or_create_session(self, db: Any, session_id: str) -> Any:
         from backend.models.db_models import GameSession

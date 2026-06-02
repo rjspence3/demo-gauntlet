@@ -5,6 +5,7 @@ from backend.main import app
 from backend.api.deps import get_current_user
 from backend.models.db_models import User
 from sqlmodel import create_engine, SQLModel
+from sqlalchemy.pool import StaticPool
 
 @pytest.fixture(autouse=True)
 def override_auth():
@@ -21,10 +22,29 @@ def mock_db_engine():
     """
     Mock the database engine with an in-memory SQLite database.
     """
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    # StaticPool keeps a single shared connection so every thread sees the same
+    # in-memory DB; without it, async endpoints doing DB work in a worker thread
+    # get a fresh empty database ("no such table: sessions").
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     SQLModel.metadata.create_all(engine)
     with patch("backend.database.engine", engine):
         yield engine
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """
+    Reset the slowapi limiter before each test. All tests share the same
+    'testclient' IP, so without this the 5/min counts bleed across tests and
+    make rate-limit assertions order-dependent.
+    """
+    from backend.limiter import limiter
+    limiter.reset()
+    yield
+
 
 @pytest.fixture(autouse=True)
 def mock_arq_pool():
