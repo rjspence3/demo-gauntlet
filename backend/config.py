@@ -67,6 +67,9 @@ class Config(BaseSettings):
     AWS_ACCESS_KEY_ID: str | None = None
     AWS_SECRET_ACCESS_KEY: str | None = None
     S3_BUCKET_NAME: str | None = None
+
+    # GCS Configuration (shared file storage when web + worker run separately)
+    GCS_BUCKET_NAME: str | None = None
     
     # Chroma Configuration
     CHROMA_PERSISTENCE_PATH: str = "./data/chroma_db"
@@ -76,7 +79,15 @@ class Config(BaseSettings):
     # Redis Configuration
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str | None = None  # Required for managed Redis (e.g. Upstash); None for local
+    REDIS_SSL: bool = False            # Managed Redis (Upstash) requires TLS; local does not
     REDIS_KEY_PREFIX: str = "dg:"  # Unique prefix to avoid key collisions with other projects
+
+    # Worker Cloud Run Job — uploads trigger this Job to drain the queue in --burst mode.
+    # Unset locally (docker-compose runs a long-lived worker), so triggering is skipped.
+    WORKER_JOB_NAME: str | None = None   # e.g. "demo-gauntlet-worker"
+    GCP_PROJECT: str | None = None       # project that hosts the worker Job
+    GCP_REGION: str = "us-central1"      # region of the worker Job
 
     # DSPy Configuration
     # Set DSPY_PROGRAM_PATH to the path of a compiled GauntletAgent JSON file

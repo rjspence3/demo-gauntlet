@@ -9,3 +9,7 @@ frontend/dist
 .git
 .mypy_cache
 audit/
+
+# Secrets — never bake into the image (runtime injects via Secret Manager)
+.env
+.env.*

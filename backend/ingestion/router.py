@@ -53,11 +53,15 @@ async def upload_deck(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}") from e
 
-    # Offload processing to background task (Arq)
+    # Offload processing to background task (Arq) — durable in Redis.
     await request.app.state.arq_pool.enqueue_job(
         "process_deck_upload_task", file_path, session_id,
         _queue_name=request.app.state.arq_queue_name
     )
+
+    # Spin up the worker Cloud Run Job to drain the queue (no-op locally).
+    from backend.services.worker_trigger import trigger_worker_job
+    await trigger_worker_job()
 
     return {
         "session_id": session_id,

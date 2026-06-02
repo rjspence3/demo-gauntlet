@@ -93,13 +93,50 @@ class S3BlobStorage(BlobStorage):
             os.unlink(tmp.name)
             raise e
 
+class GCSBlobStorage(BlobStorage):
+    """
+    Google Cloud Storage implementation of BlobStorage.
+
+    Used when web and worker run as separate Cloud Run services: a local disk is
+    no longer shared between them, so uploads must live in a networked bucket
+    both can reach. Authenticates with the service account's default credentials.
+    """
+    def __init__(self):
+        self.bucket_name = config.GCS_BUCKET_NAME
+        if not self.bucket_name:
+            raise ValueError("GCS_BUCKET_NAME is not set")
+        from google.cloud import storage
+        self.bucket = storage.Client().bucket(self.bucket_name)
+
+    def save_upload(self, file: UploadFile, session_id: str) -> str:
+        filename = os.path.basename(file.filename) if file.filename else "unknown"
+        key = f"{session_id}/{filename}"
+        self.bucket.blob(key).upload_from_file(file.file)
+        return key
+
+    def get_file_path(self, file_ref: str) -> str:
+        import tempfile
+
+        ext = os.path.splitext(file_ref)[1]
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+        try:
+            self.bucket.blob(file_ref).download_to_filename(tmp.name)
+            tmp.close()
+            return tmp.name
+        except Exception:
+            tmp.close()
+            os.unlink(tmp.name)
+            raise
+
 def get_blob_storage() -> BlobStorage:
     """
     Factory function to get the configured BlobStorage implementation.
     """
     from backend.config import config
-    
+
+    if config.BLOB_STORAGE_TYPE == "gcs":
+        return GCSBlobStorage()
     if config.BLOB_STORAGE_TYPE == "s3":
         return S3BlobStorage()
-    
+
     return LocalBlobStorage()

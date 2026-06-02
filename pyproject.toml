@@ -28,6 +28,8 @@ dependencies = [
     "passlib[bcrypt]",
     "arq",
     "redis",
+    "google-cloud-run",
+    "google-cloud-storage",
     "python-json-logger",
     "python-multipart",
     "tenacity"

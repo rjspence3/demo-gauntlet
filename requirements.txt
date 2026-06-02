@@ -20,6 +20,8 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 arq==0.25.0
 redis==5.0.0
+google-cloud-run==0.10.18  # triggers the worker Cloud Run Job from the web service
+google-cloud-storage==2.19.0  # shared file storage (GCS) across web + worker
 python-json-logger==2.0.7
 dspy-ai==2.5.43
 

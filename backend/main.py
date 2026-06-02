@@ -34,7 +34,15 @@ async def lifespan(app: FastAPI):
         config.validate_security()
         from backend.ingestion.parser import validate_ocr_dependencies
         validate_ocr_dependencies()
-        app.state.arq_pool = await create_pool(RedisSettings(host=config.REDIS_HOST, port=config.REDIS_PORT))
+        app.state.arq_pool = await create_pool(RedisSettings(
+            host=config.REDIS_HOST,
+            port=config.REDIS_PORT,
+            password=config.REDIS_PASSWORD,
+            ssl=config.REDIS_SSL,
+            conn_timeout=15,
+            conn_retries=5,
+            conn_retry_delay=1,
+        ))
         app.state.arq_queue_name = f"{config.REDIS_KEY_PREFIX}default"  # Prefixed queue name
         yield
     except Exception as e:
