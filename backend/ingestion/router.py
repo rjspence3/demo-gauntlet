@@ -9,14 +9,14 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 from backend.ingestion.parser import extract_from_file
 from backend.ingestion.chunker import chunk_slide
 from backend.ingestion.tagger import tag_slide
-from backend.models.store import VectorStore
 from backend.models.session import SessionStore
 from backend.limiter import limiter
 
 router = APIRouter(prefix="/ingestion", tags=["ingestion"])
 
-# Initialize store (singleton-ish for now)
-store = VectorStore()
+# NOTE: the web does NOT construct a VectorStore — that loads the embedding model
+# (~80MB SentenceTransformer) at import and dominated the web cold start. Only the
+# worker (backend/ingestion/processor.py) embeds, and it builds its own store.
 
 @router.post("/upload")
 @limiter.limit("5/minute")
