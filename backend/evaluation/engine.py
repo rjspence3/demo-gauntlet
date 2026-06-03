@@ -3,8 +3,9 @@ Core engine for evaluating user answers.
 """
 from dataclasses import dataclass
 from typing import List, Dict, Any
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
+# sentence_transformers (torch) and sklearn are imported lazily at use sites —
+# they cost ~30s to import and the web must not pay that at startup (only the
+# worker/evaluation paths actually run them).
 
 @dataclass
 class EvaluationResult:
@@ -23,6 +24,7 @@ class EvaluationEngine:
         """
         Initialize the EvaluationEngine.
         """
+        from sentence_transformers import SentenceTransformer
         self.model = SentenceTransformer(model_name)
         
         # Weights
@@ -44,6 +46,7 @@ class EvaluationEngine:
             return EvaluationResult(score=0, breakdown={}, feedback="No answer provided.")
 
         # 1. Accuracy (Embedding Similarity)
+        from sklearn.metrics.pairwise import cosine_similarity
         embeddings = self.model.encode([user_answer, ideal_answer])
         accuracy = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0] * 100
         accuracy = max(0, min(100, accuracy))

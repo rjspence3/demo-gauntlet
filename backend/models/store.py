@@ -2,9 +2,7 @@
 Module for storing and retrieving deck chunks using ChromaDB.
 """
 from typing import List, cast, Optional, Dict, Any
-import chromadb
 from backend.models.core import Chunk
-from backend.models.embeddings import EmbeddingModel
 from backend.config import config
 
 class DeckRetriever:
@@ -15,7 +13,12 @@ class DeckRetriever:
         """
         Initialize the DeckRetriever.
         """
-        
+        # Imported lazily so the web (which never embeds/queries the store) does
+        # not pay the chromadb + sentence_transformers/torch import (~35s) at
+        # startup. Only the worker and per-request retrieval paths build this.
+        import chromadb
+        from backend.models.embeddings import EmbeddingModel
+
         if config.CHROMA_SERVER_HOST and config.CHROMA_SERVER_PORT:
             self.client = chromadb.HttpClient(host=config.CHROMA_SERVER_HOST, port=config.CHROMA_SERVER_PORT)
         else:

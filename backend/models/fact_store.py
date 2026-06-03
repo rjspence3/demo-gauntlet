@@ -2,7 +2,6 @@
 Module for storing and retrieving research facts using ChromaDB.
 """
 from typing import List, Any
-import chromadb
 from backend.models.core import Fact
 from backend.models.embeddings import EmbeddingModel
 
@@ -14,8 +13,11 @@ class FactStore:
         """
         Initialize the FactStore.
         """
+        # Lazy import — chromadb is heavy; the web must not pull it in at startup
+        # just by importing a router that references FactStore.
+        import chromadb
         from backend.config import config
-        
+
         if config.CHROMA_SERVER_HOST and config.CHROMA_SERVER_PORT:
             self.client = chromadb.HttpClient(host=config.CHROMA_SERVER_HOST, port=config.CHROMA_SERVER_PORT)
         else:

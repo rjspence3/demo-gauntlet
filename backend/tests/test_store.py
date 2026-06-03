@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 from backend.models.store import VectorStore
 from backend.models.core import Chunk
 
-@patch("backend.models.store.chromadb.PersistentClient")
-@patch("backend.models.store.EmbeddingModel")
+@patch("chromadb.PersistentClient")
+@patch("backend.models.embeddings.EmbeddingModel")
 def test_add_chunks(mock_emb_cls: Any, mock_client_cls: Any) -> None:
     """Test adding chunks to the store."""
     # Mock Embedding Model
@@ -35,8 +35,8 @@ def test_add_chunks(mock_emb_cls: Any, mock_client_cls: Any) -> None:
     mock_collection.add.assert_called_once()
     mock_emb_instance.encode.assert_called()
 
-@patch("backend.models.store.chromadb.PersistentClient")
-@patch("backend.models.store.EmbeddingModel")
+@patch("chromadb.PersistentClient")
+@patch("backend.models.embeddings.EmbeddingModel")
 def test_query_similar(mock_emb_cls: Any, mock_client_cls: Any) -> None:
     """Test querying similar chunks."""
     # Mock Embedding Model

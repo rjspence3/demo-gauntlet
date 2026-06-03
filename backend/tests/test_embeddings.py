@@ -5,7 +5,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 from backend.models.embeddings import EmbeddingModel
 
-@patch("backend.models.embeddings.SentenceTransformer")
+@patch("sentence_transformers.SentenceTransformer")
 def test_generate_embeddings(mock_st_cls: Any) -> None:
     """Test generating embeddings."""
     mock_embeddings = MagicMock()

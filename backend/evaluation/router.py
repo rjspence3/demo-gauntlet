@@ -12,8 +12,16 @@ from dataclasses import asdict
 
 router = APIRouter(prefix="/evaluation", tags=["evaluation"])
 
-# Singleton engine
-engine = EvaluationEngine()
+# Lazy singleton: EvaluationEngine loads the embedding model (~30s), so build it
+# on first score — not at import — to keep the web cold start fast.
+_engine = None
+
+
+def _get_engine() -> EvaluationEngine:
+    global _engine
+    if _engine is None:
+        _engine = EvaluationEngine()
+    return _engine
 
 class ScoreRequest(BaseModel):
     """
@@ -44,7 +52,7 @@ async def score_answer(request: Request, score_request: ScoreRequest) -> ScoreRe
         if not challenge:
             raise HTTPException(status_code=404, detail="Challenge not found")
 
-        result = engine.evaluate(score_request.user_answer, challenge.ideal_answer)
+        result = _get_engine().evaluate(score_request.user_answer, challenge.ideal_answer)
         
         # Save interaction
         store.save_interaction(score_request.session_id, {

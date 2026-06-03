@@ -2,7 +2,6 @@
 Module for generating text embeddings.
 """
 from typing import List, Union
-from sentence_transformers import SentenceTransformer
 
 class EmbeddingModel:
     """
@@ -15,6 +14,10 @@ class EmbeddingModel:
         Args:
             model_name: Name of the sentence-transformers model to use.
         """
+        # Imported lazily: importing sentence_transformers drags in torch +
+        # transformers (~30s), which the web (which never embeds) must not pay
+        # at startup. Only the worker constructs this class.
+        from sentence_transformers import SentenceTransformer
         self.model = SentenceTransformer(model_name)
 
     def encode(self, texts: Union[str, List[str]]) -> List[List[float]]:
